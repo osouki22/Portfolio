@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { projects } from "@/lib/work";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
 import { DUR, EASE } from "@/lib/motion";
+import { useIsTouch } from "@/lib/useMediaQuery";
 import WorkCard from "./WorkCard";
 
 interface WorkGridProps {
@@ -15,6 +16,9 @@ interface WorkGridProps {
 /**
  * Asymmetric editorial grid — legible as a grid, but art-directed:
  * alternating column spans and vertical offsets on a 12-column layout.
+ *
+ * Exactly one card holds the live glitch canvas at a time:
+ * desktop → the hovered card; touch → the card nearest viewport center.
  */
 const SPANS = [
   "md:col-span-7",
@@ -30,6 +34,56 @@ export default function WorkGrid({
   onHoverEnd,
 }: WorkGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
+  const [glitchSlug, setGlitchSlug] = useState<string | null>(null);
+  const isTouch = useIsTouch();
+
+  const handleHoverStart = useCallback(
+    (slug: string) => {
+      setGlitchSlug(slug);
+      onHoverStart(slug);
+    },
+    [onHoverStart]
+  );
+
+  const handleHoverEnd = useCallback(() => {
+    setGlitchSlug(null);
+    onHoverEnd();
+  }, [onHoverEnd]);
+
+  // Touch devices: the card nearest viewport center is the live one.
+  useEffect(() => {
+    if (!isTouch) return;
+    const grid = gridRef.current;
+    if (!grid) return;
+    const medias = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-card-media]")
+    );
+
+    let ticking = false;
+    const pick = () => {
+      ticking = false;
+      const mid = window.innerHeight / 2;
+      let best: { slug: string; dist: number } | null = null;
+      for (const el of medias) {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) continue;
+        const dist = Math.abs((r.top + r.bottom) / 2 - mid);
+        if (!best || dist < best.dist) {
+          best = { slug: el.dataset.cardMedia as string, dist };
+        }
+      }
+      setGlitchSlug(best ? best.slug : null);
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(pick);
+      }
+    };
+    pick();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isTouch]);
 
   useEffect(() => {
     setupGsap();
@@ -80,9 +134,10 @@ export default function WorkGrid({
             project={project}
             index={i}
             priority={i < 2}
+            glitchActive={glitchSlug === project.slug}
             onOpen={onOpen}
-            onHoverStart={onHoverStart}
-            onHoverEnd={onHoverEnd}
+            onHoverStart={handleHoverStart}
+            onHoverEnd={handleHoverEnd}
           />
         </div>
       ))}
