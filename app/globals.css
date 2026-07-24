@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --mesh-base: #050914;
+  --mesh-1: #002fa7;
+  --mesh-2: #0b4fd8;
+  --mesh-3: #1b1f5c;
+  --mesh-4: #001233;
+}
+
+html {
+  background-color: var(--mesh-base);
+  color: #ffffff;
+}
+
+body {
+  min-height: 100svh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--mesh-1);
+  color: #ffffff;
+}
