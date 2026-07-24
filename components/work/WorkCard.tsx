@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
+import GlitchCanvas from "@/components/gl/GlitchCanvas";
 import type { WorkProject } from "@/lib/work";
+import { GLITCH } from "@/lib/motion";
+import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 interface WorkCardProps {
   project: WorkProject;
   index: number;
   priority?: boolean;
+  /** this card is the single live glitch instance right now */
+  glitchActive?: boolean;
   onOpen: (slug: string) => void;
   onHoverStart: (slug: string) => void;
   onHoverEnd: () => void;
@@ -15,13 +20,31 @@ interface WorkCardProps {
 
 /**
  * A single work card. The image wrapper carries data-flip-id so the
- * expanded view can pick it up as a shared element. The glitch canvas
- * mounts inside the media box only while this card is the hovered one.
+ * expanded view can pick it up as a shared element.
+ *
+ * Glitch lifecycle: the canvas exists ONLY while this card is the active
+ * one (hover on desktop, viewport-center on touch) — mount/destroy per
+ * hover keeps a single card WebGL context alive at any time. The static
+ * image always renders beneath, so there is never a dead frame.
  */
 const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
-  { project, index, priority = false, onOpen, onHoverStart, onHoverEnd },
+  {
+    project,
+    index,
+    priority = false,
+    glitchActive = false,
+    onOpen,
+    onHoverStart,
+    onHoverEnd,
+  },
   ref
 ) {
+  const [webglOk, setWebglOk] = useState(true);
+  const reduced = useReducedMotion();
+  const isTouch = useIsTouch();
+
+  const showGlitch = glitchActive && !reduced && webglOk;
+
   return (
     <div ref={ref} data-work-card={project.slug} className="group">
       <button
@@ -49,6 +72,16 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
             sizes="(max-width: 768px) 92vw, 44vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
           />
+          {showGlitch && (
+            <GlitchCanvas
+              src={project.mainImage}
+              maxShift={GLITCH.maxShiftCard}
+              restIntensity={GLITCH.restCard}
+              ambient={isTouch}
+              dprCap={1.5}
+              onContextFail={() => setWebglOk(false)}
+            />
+          )}
         </div>
         <div className="mt-5 flex items-baseline gap-4">
           <span className="text-kicker tabular-nums">
