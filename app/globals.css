@@ -42,6 +42,12 @@ body {
   color: #ffffff;
 }
 
+/* Page scroll lock while the expanded work view is open */
+html.scroll-locked,
+html.scroll-locked body {
+  overflow: hidden;
+}
+
 /* ---------------------------------------------------------------------------
    Type scale
    Display sizes get progressively tighter tracking as they grow.

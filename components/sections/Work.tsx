@@ -1,17 +1,25 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { transitionPalette, resetPalette } from "@/lib/paletteController";
-import { projects } from "@/lib/work";
+import { lockScroll, unlockScroll } from "@/lib/scroll";
+import { projects, getProjectIndex } from "@/lib/work";
 import WorkGrid from "@/components/work/WorkGrid";
+import WorkExpanded from "@/components/work/WorkExpanded";
 
 /**
- * Work — grid + expanded-view orchestration. Hovering a card shifts the
- * page palette toward that project; leaving the grid (with nothing open)
- * returns to the Klein-blue default.
+ * Work — grid + expanded-view orchestration.
+ * Hover shifts the page palette toward the project; opening a card locks
+ * page scroll, dims the side nav (html[data-work-open]) and completes the
+ * palette transition. Closing restores everything.
  */
 export default function Work() {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  const openProject = openSlug
+    ? projects.find((p) => p.slug === openSlug) ?? null
+    : null;
 
   const handleHoverStart = useCallback(
     (slug: string) => {
@@ -27,11 +35,36 @@ export default function Work() {
   }, [openSlug]);
 
   const handleOpen = useCallback((slug: string) => {
+    const project = projects.find((p) => p.slug === slug);
+    if (!project) return;
     setOpenSlug(slug);
+    lockScroll();
+    transitionPalette(project.palette);
+    document.documentElement.setAttribute("data-work-open", "true");
   }, []);
+
+  const handleClose = useCallback(() => {
+    setOpenSlug(null);
+    unlockScroll();
+    resetPalette();
+    document.documentElement.removeAttribute("data-work-open");
+  }, []);
+
+  const handleNavigate = useCallback(
+    (dir: 1 | -1) => {
+      if (!openSlug) return;
+      const index = getProjectIndex(openSlug);
+      const nextProject =
+        projects[(index + dir + projects.length) % projects.length];
+      setOpenSlug(nextProject.slug);
+      transitionPalette(nextProject.palette);
+    },
+    [openSlug]
+  );
 
   return (
     <section
+      ref={sectionRef}
       id="work"
       aria-label="Work"
       className="relative px-[6vw] py-[18vh]"
@@ -47,6 +80,13 @@ export default function Work() {
         onHoverStart={handleHoverStart}
         onHoverEnd={handleHoverEnd}
       />
+      {openProject && (
+        <WorkExpanded
+          project={openProject}
+          onClose={handleClose}
+          onNavigate={handleNavigate}
+        />
+      )}
     </section>
   );
 }
