@@ -1,16 +1,33 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+
+  /* Fluid display scale — large and confident at the top end. */
+  --text-display: clamp(3.25rem, 11vw, 10rem);
+  --text-display-sm: clamp(2.5rem, 7vw, 6.5rem);
+  --text-headline: clamp(2rem, 4.5vw, 4rem);
+  --text-title: clamp(1.5rem, 2.6vw, 2.25rem);
+  --text-lead: clamp(1.0625rem, 1.4vw, 1.3125rem);
+}
+
 :root {
   --mesh-base: #050914;
   --mesh-1: #002fa7;
   --mesh-2: #0b4fd8;
   --mesh-3: #1b1f5c;
   --mesh-4: #001233;
+
+  /* text hierarchy — white and near-white only */
+  --ink: #ffffff;
+  --ink-70: rgba(255, 255, 255, 0.7);
+  --ink-45: rgba(255, 255, 255, 0.45);
+  --ink-25: rgba(255, 255, 255, 0.25);
 }
 
 html {
   background-color: var(--mesh-base);
-  color: #ffffff;
+  color: var(--ink);
 }
 
 body {
@@ -23,4 +40,57 @@ body {
 ::selection {
   background: var(--mesh-1);
   color: #ffffff;
+}
+
+/* ---------------------------------------------------------------------------
+   Type scale
+   Display sizes get progressively tighter tracking as they grow.
+--------------------------------------------------------------------------- */
+
+.text-display {
+  font-size: var(--text-display);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.96;
+}
+
+.text-display-sm {
+  font-size: var(--text-display-sm);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.text-headline {
+  font-size: var(--text-headline);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.text-title {
+  font-size: var(--text-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.text-lead {
+  font-size: var(--text-lead);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.text-kicker {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-45);
 }
