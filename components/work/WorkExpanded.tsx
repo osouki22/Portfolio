@@ -74,13 +74,21 @@ export default function WorkExpanded({
       aria-modal="true"
       aria-label={project.title}
       className="fixed inset-0 z-50 overflow-y-auto overscroll-contain outline-none"
-      style={{
-        background:
-          "radial-gradient(120vmax 120vmax at 80% -20%, color-mix(in srgb, var(--mesh-3) 55%, transparent), transparent 60%), radial-gradient(100vmax 100vmax at 10% 110%, color-mix(in srgb, var(--mesh-4) 70%, transparent), transparent 65%), var(--mesh-base)",
-      }}
     >
+      {/* Opaque backdrop — fades in behind the Flip, reads the mesh vars so
+          it follows the palette transition */}
+      <div
+        data-expanded-bg
+        className="fixed inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(120vmax 120vmax at 80% -20%, color-mix(in srgb, var(--mesh-3) 55%, transparent), transparent 60%), radial-gradient(100vmax 100vmax at 10% 110%, color-mix(in srgb, var(--mesh-4) 70%, transparent), transparent 65%), var(--mesh-base)",
+        }}
+      />
+
       {/* Close */}
       <button
+        data-expanded-reveal
         type="button"
         onClick={onClose}
         aria-label="Close project"
@@ -111,7 +119,7 @@ export default function WorkExpanded({
 
       <div ref={contentRef} className="px-[6vw] pb-[16vh]">
         {/* Title block */}
-        <header className="pt-[8vh]">
+        <header data-expanded-reveal className="pt-[8vh]">
           <div className="flex items-baseline gap-5">
             <span className="text-kicker tabular-nums">
               {String(index + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
@@ -135,7 +143,11 @@ export default function WorkExpanded({
               ["Shipped", project.shipped],
             ] as const
           ).map(([label, text]) => (
-            <div key={label} className="grid gap-5 md:grid-cols-12 md:gap-x-[4vw]">
+            <div
+              key={label}
+              data-expanded-reveal
+              className="grid gap-5 md:grid-cols-12 md:gap-x-[4vw]"
+            >
               <h3 className="text-kicker md:col-span-3">{label}</h3>
               <p className="text-body max-w-[46rem] text-white/75 md:col-span-8">
                 {text}
@@ -145,7 +157,10 @@ export default function WorkExpanded({
         </div>
 
         {/* Detail images — art-directed, not a uniform 2×2 dump */}
-        <div className="mt-[16vh] grid grid-cols-1 gap-y-[8vh] md:grid-cols-12 md:gap-x-[4vw]">
+        <div
+          data-expanded-reveal
+          className="mt-[16vh] grid grid-cols-1 gap-y-[8vh] md:grid-cols-12 md:gap-x-[4vw]"
+        >
           <div className="relative aspect-[16/9] overflow-hidden md:col-span-10">
             <Image
               src={project.detailImages[0]}
@@ -186,6 +201,7 @@ export default function WorkExpanded({
 
         {/* Prev / next */}
         <nav
+          data-expanded-reveal
           aria-label="Project navigation"
           className="mt-[14vh] flex items-center justify-between border-t border-white/10 pt-10"
         >
