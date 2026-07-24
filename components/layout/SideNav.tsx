@@ -33,9 +33,9 @@ export default function SideNav() {
   return (
     <nav
       aria-label="Sections"
-      className="side-nav fixed right-5 top-1/2 z-40 -translate-y-1/2 md:right-8"
+      className="side-nav fixed right-3 top-1/2 z-40 -translate-y-1/2 md:right-8"
     >
-      <ul className="flex flex-col items-end gap-6">
+      <ul className="flex flex-col items-end gap-5 md:gap-6">
         {sections.map(({ id, label }, i) => {
           const isActive = active === id;
           return (
@@ -45,7 +45,7 @@ export default function SideNav() {
                 onClick={() => scrollToSection(`#${id}`)}
                 aria-label={label}
                 aria-current={isActive ? "true" : undefined}
-                className="side-nav__item group flex cursor-pointer items-center gap-3"
+                className="side-nav__item group flex min-h-6 min-w-6 cursor-pointer items-center justify-end gap-3"
               >
                 <span
                   className={`side-nav__label hidden text-[0.6875rem] font-medium uppercase tracking-[0.18em] transition-all duration-300 md:block ${
