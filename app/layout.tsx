@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
+import MeshGradient from "@/components/layout/MeshGradient";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -20,7 +21,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={spaceGrotesk.variable}>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <MeshGradient />
+        {children}
+      </body>
     </html>
   );
 }

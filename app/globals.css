@@ -94,3 +94,99 @@ body {
   text-transform: uppercase;
   color: var(--ink-45);
 }
+
+/* ---------------------------------------------------------------------------
+   Mesh gradient — fixed behind everything, four soft radial blobs on a dark
+   base, slow ambient drift. Reads only the --mesh-* custom properties.
+   No blur filters: the gradients' own falloff keeps this near-free on GPU.
+--------------------------------------------------------------------------- */
+
+.mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background-color: var(--mesh-base);
+}
+
+.mesh__blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.mesh__blob--1 {
+  width: 85vmax;
+  height: 85vmax;
+  top: -30vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, var(--mesh-1) 0%, transparent 62%);
+  opacity: 0.5;
+  animation: mesh-drift-1 46s ease-in-out infinite alternate;
+}
+
+.mesh__blob--2 {
+  width: 70vmax;
+  height: 70vmax;
+  bottom: -25vmax;
+  right: -18vmax;
+  background: radial-gradient(circle, var(--mesh-2) 0%, transparent 60%);
+  opacity: 0.34;
+  animation: mesh-drift-2 58s ease-in-out infinite alternate;
+}
+
+.mesh__blob--3 {
+  width: 62vmax;
+  height: 62vmax;
+  top: 22%;
+  right: -14vmax;
+  background: radial-gradient(circle, var(--mesh-3) 0%, transparent 64%);
+  opacity: 0.55;
+  animation: mesh-drift-3 39s ease-in-out infinite alternate;
+}
+
+.mesh__blob--4 {
+  width: 90vmax;
+  height: 90vmax;
+  bottom: -35vmax;
+  left: -25vmax;
+  background: radial-gradient(circle, var(--mesh-4) 0%, transparent 66%);
+  opacity: 0.75;
+  animation: mesh-drift-4 64s ease-in-out infinite alternate;
+}
+
+.mesh__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+}
+
+@keyframes mesh-drift-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(9vmax, 6vmax, 0) scale(1.12); }
+}
+
+@keyframes mesh-drift-2 {
+  from { transform: translate3d(0, 0, 0) scale(1.08); }
+  to   { transform: translate3d(-7vmax, -9vmax, 0) scale(0.96); }
+}
+
+@keyframes mesh-drift-3 {
+  from { transform: translate3d(0, 0, 0) scale(0.95); }
+  to   { transform: translate3d(-10vmax, 7vmax, 0) scale(1.1); }
+}
+
+@keyframes mesh-drift-4 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(8vmax, -5vmax, 0) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh__blob {
+    animation: none;
+  }
+}
