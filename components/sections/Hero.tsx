@@ -65,7 +65,7 @@ export default function Hero() {
           sizes="100vw"
           className="h-full w-full object-cover"
         />
-        {!reduced && webglOk && (
+        {!reduced && webglOk ? (
           <GlitchCanvas
             src={hero.portrait.src}
             maxShift={GLITCH.maxShiftHero}
@@ -74,6 +74,9 @@ export default function Hero() {
             ambient={isTouch}
             onContextFail={() => setWebglOk(false)}
           />
+        ) : (
+          /* static image + mild grain when the shader can't (or shouldn't) run */
+          <div className="grain-overlay" aria-hidden="true" />
         )}
       </div>
 

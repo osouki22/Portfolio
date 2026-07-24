@@ -82,6 +82,9 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
               onContextFail={() => setWebglOk(false)}
             />
           )}
+          {glitchActive && (reduced || !webglOk) && (
+            <div className="grain-overlay" aria-hidden="true" />
+          )}
         </div>
         <div className="mt-5 flex items-baseline gap-4">
           <span className="text-kicker tabular-nums">
