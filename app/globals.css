@@ -73,6 +73,12 @@ html.scroll-locked body {
   overflow: hidden;
 }
 
+/* The expanded view's backdrop is opaque — pause the mesh drift while a
+   project is open so the compositor isn't animating invisible layers */
+html[data-work-open] .mesh__blob {
+  animation-play-state: paused;
+}
+
 /* Side nav recedes while a project is expanded */
 .side-nav {
   transition: opacity 0.4s ease, transform 0.4s ease;
