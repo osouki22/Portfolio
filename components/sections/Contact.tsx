@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { contact } from "@/lib/content";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
 import { DUR, EASE } from "@/lib/motion";
+import MeshText from "@/components/gl/MeshText";
 
 /**
  * Contact — display-scale headline, direct links only, no form.
@@ -52,8 +53,9 @@ export default function Contact() {
       className="relative flex min-h-svh flex-col justify-between px-[6vw] pb-[7vh] pt-[24vh]"
     >
       <div>
-        <h2 data-contact-reveal className="text-display opacity-0">
-          {contact.title}
+        <h2 data-contact-reveal className="opacity-0">
+          {/* same shared mesh-text instrument as the About headline */}
+          <MeshText text={contact.title} className="text-display" />
         </h2>
         <p
           data-contact-reveal
