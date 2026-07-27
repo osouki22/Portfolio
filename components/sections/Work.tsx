@@ -87,11 +87,24 @@ export default function Work() {
     const state = Flip.getState(card);
     gsap.set(card, { visibility: "hidden" });
 
+    // content stays hidden until the image expansion has fully completed —
+    // the Flip owns the screen, then the content enters softly
+    gsap.set(reveals, { opacity: 0, y: 28 });
+
     Flip.from(state, {
       targets: expandedMedia,
       absolute: true,
       duration: DUR.expandOpen,
       ease: EASE.expansion,
+      onComplete: () => {
+        gsap.to(reveals, {
+          opacity: 1,
+          y: 0,
+          duration: DUR.expandContentIn,
+          ease: EASE.out,
+          stagger: 0.06,
+        });
+      },
     });
 
     if (bg) {
@@ -101,19 +114,6 @@ export default function Work() {
         { opacity: 1, duration: DUR.expandOpen, ease: "power2.inOut" }
       );
     }
-
-    gsap.fromTo(
-      reveals,
-      { opacity: 0, y: 28 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: EASE.out,
-        stagger: 0.06,
-        delay: DUR.expandOpen * 0.45,
-      }
-    );
 
     // remaining cards recede, staggered outward from the clicked card
     const cardRect = card.getBoundingClientRect();
@@ -191,14 +191,20 @@ export default function Work() {
 
     closingRef.current = true;
 
+    // reverse of the open sequencing: content leaves first, then the Flip
+    const flipStart = DUR.expandContentOut * 0.85;
     const tl = gsap.timeline({
       onComplete: () => finishClose(slug),
     });
-    tl.to(reveals, { opacity: 0, duration: 0.22, ease: "power1.in" }, 0);
+    tl.to(
+      reveals,
+      { opacity: 0, duration: DUR.expandContentOut, ease: "power1.in" },
+      0
+    );
     tl.to(
       bg,
       { opacity: 0, duration: DUR.expandClose, ease: "power2.inOut" },
-      0.05
+      flipStart
     );
     tl.add(
       Flip.fit(expandedMedia, card, {
@@ -206,7 +212,7 @@ export default function Work() {
         duration: DUR.expandClose,
         ease: EASE.expansion,
       }) as gsap.core.Tween,
-      0
+      flipStart
     );
     tl.to(
       otherCards(slug ?? ""),
@@ -217,7 +223,7 @@ export default function Work() {
         ease: EASE.out,
         stagger: 0.04,
       },
-      0.1
+      flipStart + 0.05
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finishClose]);

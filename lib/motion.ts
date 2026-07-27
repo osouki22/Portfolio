@@ -19,6 +19,10 @@ export const DUR = {
   expandClose: 0.75,
   /** prev/next content swap inside the expanded view (faster than the Flip) */
   projectSwap: 0.45,
+  /** expanded content stagger-in — starts only after the Flip completes */
+  expandContentIn: 0.6,
+  /** expanded content fade-out before the close Flip starts */
+  expandContentOut: 0.2,
   /** scroll-in reveal of section content */
   reveal: 1.0,
   /** grid cards fading back when one expands */
