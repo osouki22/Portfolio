@@ -1,8 +1,9 @@
 # Esteban Souki — Portfolio
 
 Single-page experimental portfolio for a Senior Product Designer. Four sections
-on one route: **Hero → About → Work → Contact**. Dark mesh-gradient backgrounds,
-Klein-blue default palette, a WebGL glitch shader as the site's signature effect.
+on one route: **Hero → About → Work → Contact**. Dark fluid-gradient background,
+Klein-blue default palette, a WebGL particle-drag field as the site's signature
+effect, deformable mesh-text headlines in About/Contact.
 
 ## Stack (and why)
 
@@ -23,10 +24,11 @@ libraries — icons are hand-authored inline SVG.
 ```
 app/            layout.tsx (fonts, Lenis, mesh), page.tsx (section order), globals.css
 components/
-  layout/       SideNav, SmoothScroll (Lenis), MeshGradient
+  layout/       SideNav, SmoothScroll (Lenis), MeshGradient (host), FluidGradient
   sections/     Hero, About, Work, Contact
   work/         WorkGrid, WorkCard, WorkExpanded
-  gl/           GlitchCanvas, useGlitchUniforms, shaders/ (glitch.vert, glitch.frag)
+  gl/           GlitchCanvas (particle drag), MeshText, useGlitchUniforms,
+                shaders/ (glitch.vert/.frag, sim.frag, meshtext.vert/.frag, fluid.frag)
 lib/
   palettes.ts   ALL palettes — single source of truth for color
   work.ts       ALL project data (copy, kickers, image paths, palette key)
@@ -42,43 +44,69 @@ public/
 
 ## Palette system
 
-The mesh gradient reads **only** five CSS custom properties on `:root`:
+The background reads **only** five CSS custom properties on `:root`:
 `--mesh-base`, `--mesh-1` … `--mesh-4`. Palettes live in `lib/palettes.ts`.
 `transitionPalette(key)` (in `lib/paletteController.ts`) tweens those variables
 with GSAP (~0.9 s) — the room's lighting shifts, never a hard cut.
+`FluidGradient` re-reads (and re-parses, cached) the variables every frame, so
+palette tweens flow straight through the WebGL background too.
 
 **To change a palette:** edit the hex values in `lib/palettes.ts`. Nothing else.
 Every project in `lib/work.ts` references a palette by key; hovering a Work
 card or opening a project transitions the page to that palette, mouse-out /
 close returns to `default` (Klein blue).
 
-## Glitch shader contract
+## Particle drag field (hero + work cards) — shader contract
 
-One shader (`components/gl/shaders/glitch.frag`) instantiated twice with
-different parameter sets (hero = aggressive, work cards ≈ 55 % of hero
-displacement). Uniform contract:
+Two-pass pipeline, one set of shaders, two instances (hero = full intensity,
+work cards ≈ 55 % displacement ceiling):
 
-| Uniform | Type | Meaning |
-| --- | --- | --- |
-| `uTexture` | sampler2D | source image |
-| `uTime` | float | elapsed seconds |
-| `uMouse` | vec2 | cursor 0–1 within the element |
-| `uMouseDir` | vec2 | smoothed cursor direction (drives RGB-split axis) |
-| `uVelocity` | float | smoothed cursor speed 0–1 |
-| `uIntensity` | float | master multiplier, CPU-driven attack/decay (rest floor > 0) |
-| `uMaxShift` | float | per-instance strip-displacement ceiling |
-| `uResolution` | vec2 | canvas size in px |
-| `uImageResolution` | vec2 | texture size (cover-fit math) |
+1. **`sim.frag`** — ping-pong half-float RT (~192 px longest side). Each texel
+   is a particle: RG = displacement, BA = velocity. Per frame:
+   `vel += cursorVel · DRAG · proximity; vel -= disp · K; vel *= DAMPING;
+   disp += vel · dt` — magnetic drag along the cursor's motion vector,
+   elastic over-damped return. Uniforms: `tSim`, `uCursor`, `uCursorVel`,
+   `uAspect`, `uDrag`, `uSpringK`, `uDamping`, `uDt`, `uRadius`.
+2. **`glitch.frag`** — display pass. Samples the field and drags the image's
+   pixels with **luminance weighting** (bright streaks, shadow resists,
+   posterized bands → torn edges), stepped displacement quantization, RGB
+   split along the local drag direction, film grain. Uniforms: `uTexture`,
+   `tSim`, `uTime`, `uMouse`, `uMouseDir`, `uVelocity`, `uIntensity`
+   (CPU envelope, rest floor > 0), `uMaxShift`, `uResolution`,
+   `uImageResolution`.
 
-Effect order inside the shader: strip displacement (re-randomized ~12×/s, not
-continuous) → RGB channel separation → scanlines (px-locked frequency) → grain.
-CPU-side dynamics live in `useGlitchUniforms.ts`: fast attack on movement,
-two-stage release (quick collapse, slow settle) to a non-zero rest floor.
+CPU-side envelope lives in `useGlitchUniforms.ts` (fast attack, two-stage
+release to a non-zero rest floor → grain never dies). Physics constants:
+`PARTICLE` in `lib/motion.ts`. Requires renderable half-float targets
+(`EXT_color_buffer_(half_)float`) — missing ⇒ static-image fallback.
 
-Performance rules: **never more than two live WebGL contexts** (hero + the one
-hovered card). Cards mount/destroy their canvas on hover; rAF loops pause via
-IntersectionObserver when off-screen. Reduced motion or WebGL failure ⇒ static
-image + CSS grain overlay — the site must be fully usable with zero WebGL.
+## Mesh-text headlines (About + Contact)
+
+One shared `<MeshText>` (`components/gl/MeshText.tsx`): the headline is drawn
+to a canvas texture (Space Grotesk, white — await `document.fonts` first) and
+rendered on a 96×40 vertex grid; the cursor drags vertices with per-vertex
+velocity + spring + damping (constants `MESH_TEXT` in `lib/motion.ts`,
+reference-faithful). The chromatic fringe cycles magenta `#ff40c0` / green
+`#40ff80` every ~400 ms — **confirmed decision: these are NOT palette colors,
+do not recolor them.** The DOM text stays in the tree for layout/a11y and is
+the reduced-motion/no-WebGL fallback.
+
+## Fluid gradient background
+
+`FluidGradient` (hosted by `MeshGradient`): domain-warped fbm on ogl, colors
+from the `--mesh-*` vars. Motion is **scroll-driven** via Lenis velocity —
+barely-there pulse at rest, turbulence scales with scroll speed, inertial
+decay on stop (constants `FLUID` in `lib/motion.ts`). Lowest-priority
+renderer: density capped (dpr ≤ 0.75), pauses under the opaque expanded Work
+view and on tab blur; reduced motion ⇒ motionless frame (palette still live).
+No-WebGL fallback: the original CSS radial-blob mesh (kept in globals.css).
+
+Performance rules: **never more than two live glitch contexts** (hero + the
+one hovered card — cards mount/destroy their canvas on hover). MeshText and
+FluidGradient each own one low-cost context; every rAF loop pauses via
+IntersectionObserver off-screen and on tab blur. Reduced motion or WebGL
+failure ⇒ static image / DOM text + CSS grain overlay — the site must be
+fully usable with zero WebGL.
 
 ## Image path convention
 
@@ -98,10 +126,15 @@ file (it never overwrites an existing one): `npm run assets:placeholders`.
 
 ## Motion
 
-All durations/eases are named constants in `lib/motion.ts`. Intent:
-glitch = fast, mechanical, discrete. About float = slow, organic, breathing.
-Work expansion = weighty custom bezier, never snappy. Palette shifts = slow,
-ambient. Scroll reveals = one restrained idea, precisely executed.
+All durations/eases are named constants in `lib/motion.ts`: `DUR`/`EASE`
+(reveals, Flip open/close, expanded-content sequencing), `PARTICLE` (drag
+field), `MESH_TEXT` (headline physics), `FLUID` (background flow), `SCROLL`
+(Lenis). Intent: particle drag = dirty, magnetic, corrupted — not liquid.
+Mesh-text = inertial drag, elastic no-bounce return. Work expansion = weighty
+custom bezier; its content reveals only **after** the Flip completes (and
+leaves before the close Flip starts). Fluid background = scroll-driven,
+ambient, never distracting. Palette shifts = slow. Scroll reveals = one
+restrained idea, precisely executed.
 
 ## Commit conventions
 
