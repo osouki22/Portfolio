@@ -69,8 +69,8 @@ export const PARTICLE = {
   maxShiftCard: 0.12, // ~55% of hero — grid must stay legible
   /** field physics: drag along cursor vector, spring home, damped settle */
   drag: 2.4,
-  springK: 0.045,
-  damping: 0.9,
+  springK: 0.03,
+  damping: 0.72,
   dt: 1.0,
   /** cursor proximity falloff radius (uv units, aspect-corrected) */
   radiusHero: 0.24,
