@@ -44,24 +44,71 @@ export const EASE = {
   palette: "sine.inOut",
 } as const;
 
-/** Glitch CPU-side dynamics (per-frame lerp factors at 60 fps). */
-export const GLITCH = {
-  /** how fast uIntensity rises on cursor movement */
+/**
+ * Particle drag field (hero + work cards) — CPU envelope and the
+ * displacement-field physics run in components/gl/shaders/sim.frag.
+ */
+export const PARTICLE = {
+  /** how fast the grain/chroma envelope rises on cursor movement */
   attack: 0.22,
   /** first-stage release — quick collapse */
   releaseFast: 0.1,
   /** second-stage release — slow final settle */
   releaseSlow: 0.03,
-  /** intensity below which release switches to the slow stage */
+  /** envelope level below which release switches to the slow stage */
   releaseKnee: 0.3,
-  /** resting intensity floor — scanlines/grain persist, image stays alive */
+  /** resting envelope floor — grain persists, the image stays alive */
   restHero: 0.07,
   restCard: 0.05,
-  /** strip re-randomization rate (Hz) — discrete, not continuous */
-  stepRate: 12.0,
-  /** max horizontal strip displacement (uv units) */
-  maxShiftHero: 0.16,
-  maxShiftCard: 0.09, // ~55% of hero — grid must stay legible
+  /** displacement ceiling in uv units */
+  maxShiftHero: 0.22,
+  maxShiftCard: 0.12, // ~55% of hero — grid must stay legible
+  /** field physics: drag along cursor vector, spring home, damped settle */
+  drag: 2.4,
+  springK: 0.045,
+  damping: 0.9,
+  dt: 1.0,
+  /** cursor proximity falloff radius (uv units, aspect-corrected) */
+  radiusHero: 0.24,
+  radiusCard: 0.34,
+  /** sim field resolution (longest side, texels) */
+  simSize: 192,
+} as const;
+
+/** Deformable mesh-text (About + Contact headlines) — reference physics. */
+export const MESH_TEXT = {
+  gridW: 96,
+  gridH: 40,
+  drag: 1.8,
+  springK: 0.08,
+  damping: 0.9,
+  dt: 0.1,
+  chroma: 0.005,
+  /** cursor proximity falloff (normalized element space) */
+  radius: 0.05,
+  /** chromatic fringe colors — confirmed decision: NOT the site palette */
+  colorA: "#ff40c0", // magenta
+  colorB: "#40ff80", // green
+  /** fringe colors cycle every ~400 ms */
+  colorCycleMs: 400,
+} as const;
+
+/** Scroll-driven fluid gradient background. */
+export const FLUID = {
+  /** resting pulse — barely-there motion, never frozen */
+  restFlow: 0.045,
+  /** how strongly Lenis scroll velocity agitates the fluid */
+  agitation: 0.02,
+  /** cap on the agitation contribution */
+  maxFlow: 1.6,
+  /** per-second decay of stored momentum once scrolling stops (inertia) */
+  decay: 1.4,
+  /** smoothing toward the target flow (per-frame lerp at 60 fps) */
+  smoothing: 0.06,
+  /** render density cap — lowest-priority GPU consumer on the page */
+  dprCap: 1.0,
+  /** film grain amplitude over the gradient */
+  grain: 0.05,
 } as const;
 
 /** About floating text. */

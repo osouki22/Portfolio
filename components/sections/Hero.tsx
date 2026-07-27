@@ -5,7 +5,7 @@ import Image from "next/image";
 import GlitchCanvas from "@/components/gl/GlitchCanvas";
 import { hero } from "@/lib/content";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
-import { DUR, EASE, GLITCH } from "@/lib/motion";
+import { DUR, EASE, PARTICLE } from "@/lib/motion";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 /**
@@ -68,8 +68,8 @@ export default function Hero() {
         {!reduced && webglOk ? (
           <GlitchCanvas
             src={hero.portrait.src}
-            maxShift={GLITCH.maxShiftHero}
-            restIntensity={GLITCH.restHero}
+            maxShift={PARTICLE.maxShiftHero}
+            restIntensity={PARTICLE.restHero}
             trackWindow
             ambient={isTouch}
             onContextFail={() => setWebglOk(false)}

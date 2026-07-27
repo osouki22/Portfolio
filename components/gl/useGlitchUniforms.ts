@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { GLITCH } from "@/lib/motion";
+import { PARTICLE } from "@/lib/motion";
 
 /**
  * CPU side of the glitch: smoothed mouse, travel direction, velocity, and
@@ -89,10 +89,10 @@ export function createGlitchDynamics(
       // intensity: fast attack toward 1 while moving; two-stage release
       const active = hasInput && idle < 0.12 && velocityTarget > 0.02;
       if (active) {
-        d.intensity += (1 - d.intensity) * f(GLITCH.attack);
+        d.intensity += (1 - d.intensity) * f(PARTICLE.attack);
       } else {
         const k =
-          d.intensity > GLITCH.releaseKnee ? GLITCH.releaseFast : GLITCH.releaseSlow;
+          d.intensity > PARTICLE.releaseKnee ? PARTICLE.releaseFast : PARTICLE.releaseSlow;
         d.intensity += (restIntensity - d.intensity) * f(k);
       }
     },

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { forwardRef, useState } from "react";
 import GlitchCanvas from "@/components/gl/GlitchCanvas";
 import type { WorkProject } from "@/lib/work";
-import { GLITCH } from "@/lib/motion";
+import { PARTICLE } from "@/lib/motion";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 interface WorkCardProps {
@@ -75,8 +75,9 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
           {showGlitch && (
             <GlitchCanvas
               src={project.mainImage}
-              maxShift={GLITCH.maxShiftCard}
-              restIntensity={GLITCH.restCard}
+              maxShift={PARTICLE.maxShiftCard}
+              restIntensity={PARTICLE.restCard}
+              radius={PARTICLE.radiusCard}
               ambient={isTouch}
               dprCap={1.5}
               onContextFail={() => setWebglOk(false)}

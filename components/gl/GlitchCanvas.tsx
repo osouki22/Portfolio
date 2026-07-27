@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Renderer, Program, Mesh, Triangle, Texture } from "ogl";
+import { Renderer, Program, Mesh, Triangle, Texture, RenderTarget } from "ogl";
 import { useGlitchUniforms } from "./useGlitchUniforms";
+import { PARTICLE } from "@/lib/motion";
 import vertex from "./shaders/glitch.vert";
 import fragment from "./shaders/glitch.frag";
+import simFragment from "./shaders/sim.frag";
 
 interface GlitchCanvasProps {
   src: string;
-  /** strip displacement ceiling (uv units) — hero > card */
+  /** displacement ceiling (uv units) — hero > card */
   maxShift: number;
-  /** resting intensity floor — scanlines/grain persist at rest */
+  /** resting envelope floor — grain persists at rest */
   restIntensity: number;
+  /** cursor proximity falloff radius for the drag field */
+  radius?: number;
   /** hero: track the cursor across the whole viewport */
   trackWindow?: boolean;
   /** autonomous drift when idle (touch devices) */
@@ -24,15 +28,17 @@ interface GlitchCanvasProps {
 }
 
 /**
- * Reusable ogl-backed glitch renderer: one fragment shader on a fullscreen
- * triangle. Owns its context; mount/unmount = create/destroy. The rAF loop
- * pauses when the element leaves the viewport or the tab hides.
- * Fades in only once the texture is ready — no black flash.
+ * Particle-drag renderer: a low-res half-float ping-pong displacement field
+ * (velocity + spring + damping per texel, sim.frag) feeds the display pass
+ * (glitch.frag) which drags the image's pixels with luminance weighting.
+ * Owns its context; mount/unmount = create/destroy. The rAF loop pauses
+ * when the element leaves the viewport or the tab hides.
  */
 export default function GlitchCanvas({
   src,
   maxShift,
   restIntensity,
+  radius = PARTICLE.radiusHero,
   trackWindow = false,
   ambient = false,
   dprCap = 1.75,
@@ -56,6 +62,11 @@ export default function GlitchCanvas({
         powerPreference: "high-performance",
       });
       if (!renderer.gl) throw new Error("no context");
+      // the sim needs renderable half-float targets
+      if (!renderer.gl.getExtension("EXT_color_buffer_float") &&
+          !renderer.gl.getExtension("EXT_color_buffer_half_float")) {
+        throw new Error("no float render targets");
+      }
     } catch {
       onContextFail?.();
       return;
@@ -68,6 +79,42 @@ export default function GlitchCanvas({
     gl.canvas.style.height = "100%";
     holder.appendChild(gl.canvas);
 
+    // ---- displacement-field sim (ping-pong) -------------------------------
+    const gl2 = gl as unknown as WebGL2RenderingContext;
+    const makeTarget = (w: number, h: number) =>
+      new RenderTarget(gl, {
+        width: w,
+        height: h,
+        type: gl2.HALF_FLOAT,
+        format: gl2.RGBA,
+        internalFormat: gl2.RGBA16F,
+        minFilter: gl2.LINEAR,
+        magFilter: gl2.LINEAR,
+        depth: false,
+      });
+
+    let simRead = makeTarget(4, 4);
+    let simWrite = makeTarget(4, 4);
+
+    const simGeometry = new Triangle(gl);
+    const simProgram = new Program(gl, {
+      vertex,
+      fragment: simFragment,
+      uniforms: {
+        tSim: { value: simRead.texture },
+        uCursor: { value: [0.5, 0.5] },
+        uCursorVel: { value: [0, 0] },
+        uAspect: { value: 1 },
+        uDrag: { value: PARTICLE.drag },
+        uSpringK: { value: PARTICLE.springK },
+        uDamping: { value: PARTICLE.damping },
+        uDt: { value: PARTICLE.dt },
+        uRadius: { value: radius },
+      },
+    });
+    const simMesh = new Mesh(gl, { geometry: simGeometry, program: simProgram });
+
+    // ---- display pass ------------------------------------------------------
     const texture = new Texture(gl, { generateMipmaps: false });
     const geometry = new Triangle(gl);
     const program = new Program(gl, {
@@ -75,6 +122,7 @@ export default function GlitchCanvas({
       fragment,
       uniforms: {
         uTexture: { value: texture },
+        tSim: { value: simRead.texture },
         uTime: { value: 0 },
         uMouse: { value: [0.5, 0.5] },
         uMouseDir: { value: [1, 0] },
@@ -112,6 +160,13 @@ export default function GlitchCanvas({
         gl.drawingBufferWidth,
         gl.drawingBufferHeight,
       ];
+      const aspect = width / height;
+      simProgram.uniforms.uAspect.value = aspect;
+      // rebuild the field at the new aspect (state reset is imperceptible)
+      const sw = aspect >= 1 ? PARTICLE.simSize : Math.round(PARTICLE.simSize * aspect);
+      const sh = aspect >= 1 ? Math.round(PARTICLE.simSize / aspect) : PARTICLE.simSize;
+      simRead = makeTarget(Math.max(sw, 8), Math.max(sh, 8));
+      simWrite = makeTarget(Math.max(sw, 8), Math.max(sh, 8));
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -159,6 +214,7 @@ export default function GlitchCanvas({
     let inView = true;
     let last = performance.now();
     let elapsed = 0;
+    const prevMouse = { x: 0.5, y: 0.5 };
 
     const frame = (now: number) => {
       if (!running) return;
@@ -167,6 +223,25 @@ export default function GlitchCanvas({
       elapsed += dt;
 
       dynamics.update(dt, elapsed);
+
+      // cursor velocity in uv/frame (frame-normalized to 60 fps)
+      const scale = dt > 0 ? (1 / 60) / dt : 1;
+      const cvx = (dynamics.mouse.x - prevMouse.x) * scale;
+      const cvy = (dynamics.mouse.y - prevMouse.y) * scale;
+      prevMouse.x = dynamics.mouse.x;
+      prevMouse.y = dynamics.mouse.y;
+
+      // 1) advance the displacement field
+      simProgram.uniforms.tSim.value = simRead.texture;
+      simProgram.uniforms.uCursor.value = [dynamics.mouse.x, dynamics.mouse.y];
+      simProgram.uniforms.uCursorVel.value = [cvx, cvy];
+      renderer.render({ scene: simMesh, target: simWrite });
+      const tmp = simRead;
+      simRead = simWrite;
+      simWrite = tmp;
+
+      // 2) display pass
+      program.uniforms.tSim.value = simRead.texture;
       program.uniforms.uTime.value = elapsed;
       program.uniforms.uMouse.value = [dynamics.mouse.x, dynamics.mouse.y];
       program.uniforms.uMouseDir.value = [dynamics.mouseDir.x, dynamics.mouseDir.y];
@@ -219,7 +294,7 @@ export default function GlitchCanvas({
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src, maxShift, restIntensity, trackWindow, ambient, dprCap]);
+  }, [src, maxShift, restIntensity, radius, trackWindow, ambient, dprCap]);
 
   return (
     <div
