@@ -17,7 +17,7 @@ interface WorkGridProps {
  * Asymmetric editorial grid — legible as a grid, but art-directed:
  * alternating column spans and vertical offsets on a 12-column layout.
  *
- * Exactly one card holds the live glitch canvas at a time:
+ * Exactly one card holds the live liquid canvas at a time:
  * desktop → the hovered card; touch → the card nearest viewport center.
  */
 const SPANS = [
@@ -34,19 +34,19 @@ export default function WorkGrid({
   onHoverEnd,
 }: WorkGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
-  const [glitchSlug, setGlitchSlug] = useState<string | null>(null);
+  const [liquidSlug, setLiquidSlug] = useState<string | null>(null);
   const isTouch = useIsTouch();
 
   const handleHoverStart = useCallback(
     (slug: string) => {
-      setGlitchSlug(slug);
+      setLiquidSlug(slug);
       onHoverStart(slug);
     },
     [onHoverStart]
   );
 
   const handleHoverEnd = useCallback(() => {
-    setGlitchSlug(null);
+    setLiquidSlug(null);
     onHoverEnd();
   }, [onHoverEnd]);
 
@@ -72,7 +72,7 @@ export default function WorkGrid({
           best = { slug: el.dataset.cardMedia as string, dist };
         }
       }
-      setGlitchSlug(best ? best.slug : null);
+      setLiquidSlug(best ? best.slug : null);
     };
     const onScroll = () => {
       if (!ticking) {
@@ -134,7 +134,7 @@ export default function WorkGrid({
             project={project}
             index={i}
             priority={i < 2}
-            glitchActive={glitchSlug === project.slug}
+            liquidActive={liquidSlug === project.slug}
             onOpen={onOpen}
             onHoverStart={handleHoverStart}
             onHoverEnd={handleHoverEnd}

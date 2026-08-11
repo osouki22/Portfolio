@@ -171,26 +171,40 @@ export default function LiquidCanvas({
       };
     };
 
-    const onPointerMove = (e: PointerEvent) => {
-      const p = toLocal(e.clientX, e.clientY);
-      dynamics.input(p.x, p.y);
-    };
-    const onPointerLeave = () => dynamics.release();
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (!t) return;
-      const p = toLocal(t.clientX, t.clientY);
+    /**
+     * Input is always taken from `window`: this canvas is pointer-events-none
+     * (it must never intercept clicks on the card), so listening on the
+     * element itself would never fire. For the card instance the position is
+     * normalized to its own box, and a pointer outside that box releases the
+     * surface so it settles back.
+     */
+    const feed = (clientX: number, clientY: number) => {
+      if (!trackWindow) {
+        const r = holder.getBoundingClientRect();
+        const inside =
+          clientX >= r.left &&
+          clientX <= r.right &&
+          clientY >= r.top &&
+          clientY <= r.bottom;
+        if (!inside) {
+          dynamics.release();
+          return;
+        }
+      }
+      const p = toLocal(clientX, clientY);
       dynamics.input(p.x, p.y);
     };
 
-    const inputTarget: HTMLElement | Window = trackWindow ? window : holder;
-    inputTarget.addEventListener("pointermove", onPointerMove as EventListener, {
-      passive: true,
-    });
-    inputTarget.addEventListener("pointerleave", onPointerLeave);
-    inputTarget.addEventListener("touchmove", onTouchMove as EventListener, {
-      passive: true,
-    });
+    const onPointerMove = (e: PointerEvent) => feed(e.clientX, e.clientY);
+    const onPointerLeave = () => dynamics.release();
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) feed(t.clientX, t.clientY);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
 
     // ---- render loop, paused off-screen / hidden tab ------------------------
     let raf = 0;
@@ -245,12 +259,9 @@ export default function LiquidCanvas({
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      inputTarget.removeEventListener(
-        "pointermove",
-        onPointerMove as EventListener
-      );
-      inputTarget.removeEventListener("pointerleave", onPointerLeave);
-      inputTarget.removeEventListener("touchmove", onTouchMove as EventListener);
+      window.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("touchmove", onTouchMove);
       holder.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
