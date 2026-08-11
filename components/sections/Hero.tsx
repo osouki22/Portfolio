@@ -7,6 +7,7 @@ import { hero } from "@/lib/content";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
 import { DUR, EASE, LIQUID } from "@/lib/motion";
 import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { useLiquidBody } from "@/lib/useLiquidBody";
 
 /**
  * Full-viewport hero. The portrait fills the frame; the name and role sit
@@ -16,9 +17,14 @@ import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
  */
 export default function Hero() {
   const textRef = useRef<HTMLDivElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
   const [webglOk, setWebglOk] = useState(true);
   const reduced = useReducedMotion();
   const isTouch = useIsTouch();
+
+  // the hero body itself flexes with scroll direction (element-level,
+  // independent of the in-shader pixel warp)
+  useLiquidBody(mediaRef, !reduced);
 
   useEffect(() => {
     setupGsap();
@@ -56,7 +62,11 @@ export default function Hero() {
     >
       {/* Portrait: the top layer as a static image, with the liquid canvas
           above it when live — it composites both layers itself */}
-      <div className="absolute inset-0" data-hero-media>
+      <div
+        ref={mediaRef}
+        className="absolute inset-0 will-change-transform"
+        data-hero-media
+      >
         <Image
           src={hero.portraitTop.src}
           alt={hero.portraitTop.alt}

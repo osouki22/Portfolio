@@ -94,6 +94,19 @@ out as it shrinks so at rest **only the top layer remains**.
 **Card:** no aperture — the project image must stay readable — just a
 liquid push around the cursor at roughly half the hero's ceiling.
 
+**Hero body flex** (`lib/useLiquidBody.ts`) is a third, *element-level*
+layer on top of those two: a CSS transform on the hero media block driven
+by **signed** Lenis velocity, so the body stretches as it is pushed and the
+two scroll directions read differently (down anchors the top edge, up the
+bottom). Deliberately isolated from the shader work — the aperture is
+viewport-normalized so the transform can't feed back into it, CSS
+transforms don't trigger the canvas ResizeObserver, both axes only scale
+*up* so a full-bleed hero can never expose a gap, and at rest the transform
+is removed entirely so the canvas stays pixel-crisp. Master knob:
+`LIQUID.bodyStretch`. Note Lenis retains its last `velocity` after its
+animation ends, so the hook zeroes the reading when the scroll position
+stops changing — without that the body never fully settles.
+
 CPU envelopes live in `useLiquidDynamics.ts` (`LIQUID` constants in
 `lib/motion.ts`). Note the canvas is `pointer-events-none`, so **pointer
 input is taken from `window`** and normalized to the element's box —

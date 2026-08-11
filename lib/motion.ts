@@ -76,6 +76,29 @@ export const LIQUID = {
   /** uv displacement at full warp — deliberately subtle */
   heroWarpAmp: 0.014,
 
+  /**
+   * --- hero body: the element itself flexes with scroll direction ---
+   * A CSS transform on the hero media block, on top of (and independent
+   * from) the in-shader pixel warp. Scrolling down anchors the body at its
+   * top edge and lets it trail downward; scrolling up anchors it at the
+   * bottom — so the two directions read differently, like a semi-liquid
+   * object being pushed. Both axes only ever scale *up*, so the full-bleed
+   * media can never expose a gap, and the transform is dropped entirely at
+   * rest so the canvas stays pixel-crisp.
+   */
+  /** vertical stretch at full deflection — the master intensity knob */
+  bodyStretch: 0.028,
+  /** how much of that stretch the horizontal axis gets (< 1 ⇒ elongation) */
+  bodyNarrow: 0.35,
+  /** signed lean in degrees at full deflection — direction made visible */
+  bodySkew: 0.32,
+  /** Lenis velocity that counts as a full push */
+  bodyVelocityScale: 55,
+  /** per-frame lerp while the push builds */
+  bodyInertia: 0.18,
+  /** per-second settle back to the resting shape — inertia, never a cut */
+  bodyDecay: 3.2,
+
   /* --- work-card hover (a supporting echo, not the signature) --- */
   /** max liquid displacement on a card ≈ 55 % of the hero's warp character */
   cardPushAmp: 0.055,
