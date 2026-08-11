@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from "ogl";
 import { getLenis } from "@/lib/scroll";
 import { FLUID } from "@/lib/motion";
-import vertex from "./../gl/shaders/glitch.vert";
+import vertex from "./../gl/shaders/quad.vert";
 import fragment from "./../gl/shaders/fluid.frag";
 
 interface FluidGradientProps {

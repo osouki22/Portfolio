@@ -1,11 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { forwardRef, useState } from "react";
-import GlitchCanvas from "@/components/gl/GlitchCanvas";
+import { forwardRef } from "react";
 import type { WorkProject } from "@/lib/work";
-import { PARTICLE } from "@/lib/motion";
-import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { useReducedMotion } from "@/lib/useMediaQuery";
 
 interface WorkCardProps {
   project: WorkProject;
@@ -39,11 +37,7 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
   },
   ref
 ) {
-  const [webglOk, setWebglOk] = useState(true);
   const reduced = useReducedMotion();
-  const isTouch = useIsTouch();
-
-  const showGlitch = glitchActive && !reduced && webglOk;
 
   return (
     <div ref={ref} data-work-card={project.slug} className="group">
@@ -72,18 +66,7 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
             sizes="(max-width: 768px) 92vw, 44vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
           />
-          {showGlitch && (
-            <GlitchCanvas
-              src={project.mainImage}
-              maxShift={PARTICLE.maxShiftCard}
-              restIntensity={PARTICLE.restCard}
-              radius={PARTICLE.radiusCard}
-              ambient={isTouch}
-              dprCap={1.5}
-              onContextFail={() => setWebglOk(false)}
-            />
-          )}
-          {glitchActive && (reduced || !webglOk) && (
+          {glitchActive && reduced && (
             <div className="grain-overlay" aria-hidden="true" />
           )}
         </div>

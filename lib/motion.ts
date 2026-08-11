@@ -3,8 +3,8 @@
  * Tune motion globally here — components never hardcode timing.
  *
  * Intent:
- *  - glitch: fast, mechanical, discrete (hardware failure)
- *  - about float: slow, continuous, organic (breathing)
+ *  - liquid effects (hero mask, card hover, background): one water-like
+ *    vocabulary — responsive to input, settling with inertia, never harsh
  *  - work expansion: confident and substantial, never snappy
  *  - palette shifts: slow and ambient, like a room's lighting changing
  *  - scroll reveals: restrained, one idea executed precisely
@@ -48,37 +48,6 @@ export const EASE = {
   palette: "sine.inOut",
 } as const;
 
-/**
- * Particle drag field (hero + work cards) — CPU envelope and the
- * displacement-field physics run in components/gl/shaders/sim.frag.
- */
-export const PARTICLE = {
-  /** how fast the grain/chroma envelope rises on cursor movement */
-  attack: 0.22,
-  /** first-stage release — quick collapse */
-  releaseFast: 0.1,
-  /** second-stage release — slow final settle */
-  releaseSlow: 0.03,
-  /** envelope level below which release switches to the slow stage */
-  releaseKnee: 0.3,
-  /** resting envelope floor — grain persists, the image stays alive */
-  restHero: 0.07,
-  restCard: 0.05,
-  /** displacement ceiling in uv units */
-  maxShiftHero: 0.22,
-  maxShiftCard: 0.12, // ~55% of hero — grid must stay legible
-  /** field physics: drag along cursor vector, spring home, damped settle */
-  drag: 2.4,
-  springK: 0.03,
-  damping: 0.72,
-  dt: 1.0,
-  /** cursor proximity falloff radius (uv units, aspect-corrected) */
-  radiusHero: 0.24,
-  radiusCard: 0.34,
-  /** sim field resolution (longest side, texels) */
-  simSize: 192,
-} as const;
-
 /** Deformable mesh-text (About + Contact headlines) — reference physics. */
 export const MESH_TEXT = {
   gridW: 96,
@@ -113,22 +82,6 @@ export const FLUID = {
   dprCap: 1.0,
   /** film grain amplitude over the gradient */
   grain: 0.05,
-} as const;
-
-/** About floating text. */
-export const FLOAT = {
-  /** vertical drift amplitude in px */
-  amp: 5,
-  /** rotational drift amplitude in degrees */
-  rot: 0.6,
-  /** base period in seconds (per-word phase offsets desynchronize it) */
-  period: 6.5,
-  /** cursor repulsion radius in px */
-  radius: 180,
-  /** max repulsion displacement in px */
-  push: 26,
-  /** over-damped spring: per-frame lerp toward target (no bounce) */
-  damping: 0.075,
 } as const;
 
 /** Lenis config — refined, not floaty. */

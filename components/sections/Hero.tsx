@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
-import GlitchCanvas from "@/components/gl/GlitchCanvas";
 import { hero } from "@/lib/content";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
-import { DUR, EASE, PARTICLE } from "@/lib/motion";
-import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { DUR, EASE } from "@/lib/motion";
 
 /**
  * Full-viewport hero. The portrait fills the frame; the name and role sit
@@ -16,9 +14,6 @@ import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
  */
 export default function Hero() {
   const textRef = useRef<HTMLDivElement>(null);
-  const [webglOk, setWebglOk] = useState(true);
-  const reduced = useReducedMotion();
-  const isTouch = useIsTouch();
 
   useEffect(() => {
     setupGsap();
@@ -65,19 +60,7 @@ export default function Hero() {
           sizes="100vw"
           className="h-full w-full object-cover"
         />
-        {!reduced && webglOk ? (
-          <GlitchCanvas
-            src={hero.portrait.src}
-            maxShift={PARTICLE.maxShiftHero}
-            restIntensity={PARTICLE.restHero}
-            trackWindow
-            ambient={isTouch}
-            onContextFail={() => setWebglOk(false)}
-          />
-        ) : (
-          /* static image + mild grain when the shader can't (or shouldn't) run */
-          <div className="grain-overlay" aria-hidden="true" />
-        )}
+        <div className="grain-overlay" aria-hidden="true" />
       </div>
 
       {/* Name + role — clean DOM type above the canvas, never glitched */}
