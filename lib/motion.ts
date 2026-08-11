@@ -87,13 +87,13 @@ export const LIQUID = {
    * rest so the canvas stays pixel-crisp.
    */
   /** vertical stretch at full deflection — the master intensity knob */
-  bodyStretch: 0.028,
+  bodyStretch: 0.12,
   /** how much of that stretch the horizontal axis gets (< 1 ⇒ elongation) */
   bodyNarrow: 0.35,
   /** signed lean in degrees at full deflection — direction made visible */
-  bodySkew: 0.32,
+  bodySkew: 1.8,
   /** Lenis velocity that counts as a full push */
-  bodyVelocityScale: 55,
+  bodyVelocityScale: 30,
   /** per-frame lerp while the push builds */
   bodyInertia: 0.18,
   /** per-second settle back to the resting shape — inertia, never a cut */
