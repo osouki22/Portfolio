@@ -99,6 +99,28 @@ export const LIQUID = {
   /** per-second settle back to the resting shape — inertia, never a cut */
   bodyDecay: 3.2,
 
+  /**
+   * --- hero silhouette: the frame itself stops being a rectangle ---
+   * A clip-path polygon whose edges are sampled along a bow curve, so the
+   * *middle* of each edge swells inward (something border-radius cannot
+   * do — it only rounds corners). Applied to the hero section, which
+   * carries no transform, so the silhouette and the body flex compose
+   * instead of fighting. Corners stay pinned; at rest the clip is removed
+   * entirely and the frame is a clean rectangle again.
+   */
+  /** deepest inward bow, in % of the box — the master silhouette knob */
+  silhouetteBow: 2.6,
+  /** the leading edge bows less than the trailing one (mass lags behind) */
+  silhouetteLeadRatio: 0.35,
+  /** how much of the bow the left/right edges pick up */
+  silhouetteSideRatio: 0.25,
+  /** secondary ripple riding the bow, so edges undulate, not just arc */
+  silhouetteWave: 0.35,
+  /** speed of that ripple travelling along the edge */
+  silhouetteWaveSpeed: 0.8,
+  /** samples per edge — more = smoother curve, longer clip-path string */
+  silhouetteSegments: 14,
+
   /* --- work-card hover (a supporting echo, not the signature) --- */
   /** max liquid displacement on a card ≈ 55 % of the hero's warp character */
   cardPushAmp: 0.055,

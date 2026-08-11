@@ -18,13 +18,15 @@ import { useLiquidBody } from "@/lib/useLiquidBody";
 export default function Hero() {
   const textRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const [webglOk, setWebglOk] = useState(true);
   const reduced = useReducedMotion();
   const isTouch = useIsTouch();
 
-  // the hero body itself flexes with scroll direction (element-level,
-  // independent of the in-shader pixel warp)
-  useLiquidBody(mediaRef, !reduced);
+  // the hero body flexes with scroll direction, and the section's own
+  // outline loses its rectangular shape — both element-level, independent
+  // of the in-shader pixel warp
+  useLiquidBody(mediaRef, !reduced, sectionRef);
 
   useEffect(() => {
     setupGsap();
@@ -56,6 +58,7 @@ export default function Hero() {
 
   return (
     <section
+      ref={sectionRef}
       id="home"
       aria-label="Intro"
       className="relative h-svh min-h-[540px] overflow-hidden"

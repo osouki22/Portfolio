@@ -107,6 +107,18 @@ is removed entirely so the canvas stays pixel-crisp. Master knob:
 animation ends, so the hook zeroes the reading when the scroll position
 stops changing — without that the body never fully settles.
 
+**Hero silhouette** (same hook, third layer): a `clip-path: polygon()`
+whose edges are sampled along a bow curve, so the *middle* of each edge
+swells inward and the frame stops being a rectangle — `border-radius` can
+only round corners, which is why it isn't used here. It is applied to the
+hero **section**, which carries no transform, so silhouette and body flex
+compose instead of multiplying. Corners stay pinned (the shape can never
+tear away from the layout) and the clip is removed entirely at rest.
+Because `clip-path` only ever cuts inward, the bow is inward-only and the
+fluid background shows through the curve. Master knob:
+`LIQUID.silhouetteBow` (in % of the box; the shipped 2.6 is deliberately
+subtle — raise it to ~8–9 to inspect the shape).
+
 CPU envelopes live in `useLiquidDynamics.ts` (`LIQUID` constants in
 `lib/motion.ts`). Note the canvas is `pointer-events-none`, so **pointer
 input is taken from `window`** and normalized to the element's box —

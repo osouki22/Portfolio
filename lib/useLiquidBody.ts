@@ -26,7 +26,8 @@ import { LIQUID } from "./motion";
  */
 export function useLiquidBody(
   ref: RefObject<HTMLElement | null>,
-  enabled = true
+  enabled = true,
+  frameRef?: RefObject<HTMLElement | null>
 ) {
   useEffect(() => {
     if (!enabled) return;
@@ -34,11 +35,59 @@ export function useLiquidBody(
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    const frame = frameRef?.current ?? null;
+
     let signed = 0; // smoothed, signed deflection -1..1
     let lastPos = window.scrollY;
     let attached = false;
 
-    const tick = (_t: number, deltaMs: number) => {
+    /**
+     * The silhouette: each edge is sampled along a bow curve so the middle
+     * of the edge swells inward — the frame stops being a rectangle rather
+     * than merely getting rounded corners. A travelling secondary ripple
+     * keeps it undulating instead of a clean parabola. Corners stay pinned,
+     * so the shape can never tear away from the layout.
+     */
+    const silhouette = (s: number, t: number) => {
+      const mag = Math.abs(s);
+      const bow = LIQUID.silhouetteBow * mag;
+      const lead = bow * LIQUID.silhouetteLeadRatio;
+      // scrolling down ⇒ the top edge trails and bows deepest; up mirrors it
+      const top = s > 0 ? bow : lead;
+      const bottom = s > 0 ? lead : bow;
+      const side = bow * LIQUID.silhouetteSideRatio;
+      const n = LIQUID.silhouetteSegments;
+
+      const wave = (u: number, phase: number) =>
+        Math.sin(Math.PI * u) *
+        (1 +
+          LIQUID.silhouetteWave *
+            Math.sin(u * Math.PI * 3 + t * LIQUID.silhouetteWaveSpeed + phase));
+
+      const pts: string[] = [];
+      const p = (x: number, y: number) =>
+        pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+
+      for (let i = 0; i <= n; i++) {
+        const u = i / n;
+        p(u * 100, top * wave(u, 0));
+      }
+      for (let i = 1; i <= n; i++) {
+        const u = i / n;
+        p(100 - side * wave(u, 1.7), u * 100);
+      }
+      for (let i = 1; i <= n; i++) {
+        const u = i / n;
+        p(100 - u * 100, 100 - bottom * wave(1 - u, 3.1));
+      }
+      for (let i = 1; i < n; i++) {
+        const u = i / n;
+        p(side * wave(1 - u, 4.6), 100 - u * 100);
+      }
+      return `polygon(${pts.join(", ")})`;
+    };
+
+    const tick = (t: number, deltaMs: number) => {
       const dt = Math.min(0.05, deltaMs / 1000);
 
       const lenis = getLenis();
@@ -71,11 +120,13 @@ export function useLiquidBody(
       if (Math.abs(signed) < 0.004) signed = 0;
 
       if (signed === 0) {
-        // fully at rest — no transform at all, canvas stays pixel-crisp
+        // fully at rest — no transform at all, canvas stays pixel-crisp,
+        // and the frame goes back to being a plain rectangle (no clipping)
         if (el.style.transform) {
           el.style.transform = "";
           el.style.transformOrigin = "";
         }
+        if (frame && frame.style.clipPath) frame.style.clipPath = "";
         return;
       }
 
@@ -89,6 +140,9 @@ export function useLiquidBody(
       el.style.transform = `scale(${scaleX.toFixed(5)}, ${scaleY.toFixed(
         5
       )}) skewY(${skew.toFixed(4)}deg)`;
+
+      // the frame's own outline, deformed by the same deflection
+      if (frame) frame.style.clipPath = silhouette(signed, t);
     };
 
     const setAttached = (on: boolean) => {
@@ -100,6 +154,7 @@ export function useLiquidBody(
         gsap.ticker.remove(tick);
         el.style.transform = "";
         el.style.transformOrigin = "";
+        if (frame) frame.style.clipPath = "";
         signed = 0;
       }
     };
@@ -119,5 +174,5 @@ export function useLiquidBody(
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [ref, enabled]);
+  }, [ref, enabled, frameRef]);
 }
