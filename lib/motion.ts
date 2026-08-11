@@ -109,7 +109,7 @@ export const LIQUID = {
    * entirely and the frame is a clean rectangle again.
    */
   /** deepest inward bow, in % of the box — the master silhouette knob */
-  silhouetteBow: 2.6,
+  silhouetteBow: 7,
   /** the leading edge bows less than the trailing one (mass lags behind) */
   silhouetteLeadRatio: 0.35,
   /** how much of the bow the left/right edges pick up */
