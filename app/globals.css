@@ -97,28 +97,28 @@ html[data-work-open] .side-nav {
 
 .text-display {
   font-size: var(--text-display);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 0.96;
 }
 
 .text-display-sm {
   font-size: var(--text-display-sm);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.03em;
   line-height: 1.02;
 }
 
 .text-headline {
   font-size: var(--text-headline);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.08;
 }
 
 .text-title {
   font-size: var(--text-title);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
