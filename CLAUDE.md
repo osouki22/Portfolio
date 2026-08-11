@@ -2,8 +2,10 @@
 
 Single-page experimental portfolio for a Senior Product Designer. Four sections
 on one route: **Hero → About → Work → Contact**. Dark fluid-gradient background,
-Klein-blue default palette, a WebGL particle-drag field as the site's signature
-effect, deformable mesh-text headlines in About/Contact.
+Klein-blue default palette, and **one liquid vocabulary** across the whole site:
+the hero's cursor-driven reveal aperture, the work-card hover, and the scrolling
+background all ride the same noise/flow field. Deformable mesh-text headlines in
+About/Contact.
 
 ## Stack (and why)
 
@@ -27,8 +29,10 @@ components/
   layout/       SideNav, SmoothScroll (Lenis), MeshGradient (host), FluidGradient
   sections/     Hero, About, Work, Contact
   work/         WorkGrid, WorkCard, WorkExpanded
-  gl/           GlitchCanvas (particle drag), MeshText, useGlitchUniforms,
-                shaders/ (glitch.vert/.frag, sim.frag, meshtext.vert/.frag, fluid.frag)
+  gl/           LiquidCanvas (hero mask + card hover), MeshText,
+                useLiquidDynamics,
+                shaders/ (quad.vert, liquid.glsl ← shared chunk,
+                          liquid.frag, fluid.frag, meshtext.vert/.frag)
 lib/
   palettes.ts   ALL palettes — single source of truth for color
   work.ts       ALL project data (copy, kickers, image paths, palette key)
@@ -38,7 +42,8 @@ lib/
   scroll.ts     shared Lenis instance accessor
   useMediaQuery.ts
 public/
-  hero/portrait.jpg          3840×2160 hero image
+  hero/portrait-top.jpg      3840×2160 — the layer you see
+  hero/portrait-bottom.jpg   3840×2160 — revealed through the liquid aperture
   work/<slug>/{main,detail-01..04}.jpg
 ```
 
@@ -56,29 +61,43 @@ Every project in `lib/work.ts` references a palette by key; hovering a Work
 card or opening a project transitions the page to that palette, mouse-out /
 close returns to `default` (Klein blue).
 
-## Particle drag field (hero + work cards) — shader contract
+## The liquid vocabulary — shared foundation
 
-Two-pass pipeline, one set of shaders, two instances (hero = full intensity,
-work cards ≈ 55 % displacement ceiling):
+`components/gl/shaders/liquid.glsl` is the single definition of the site's
+wave language: `lqHash` / `lqNoise` / `lqFbm` and `lqFlow` (a domain-warped
+flow offset). It is **prepended in TS** to every liquid surface's shader
+body (`const fragment = chunk + body`) rather than `#include`d, because
+shaders are imported as raw strings. `fluid.frag` (background), and
+`liquid.frag` (hero + cards) all ride it — change the noise here and the
+whole site changes together.
 
-1. **`sim.frag`** — ping-pong half-float RT (~192 px longest side). Each texel
-   is a particle: RG = displacement, BA = velocity. Per frame:
-   `vel += cursorVel · DRAG · proximity; vel -= disp · K; vel *= DAMPING;
-   disp += vel · dt` — magnetic drag along the cursor's motion vector,
-   elastic over-damped return. Uniforms: `tSim`, `uCursor`, `uCursorVel`,
-   `uAspect`, `uDrag`, `uSpringK`, `uDamping`, `uDt`, `uRadius`.
-2. **`glitch.frag`** — display pass. Samples the field and drags the image's
-   pixels with **luminance weighting** (bright streaks, shadow resists,
-   posterized bands → torn edges), stepped displacement quantization, RGB
-   split along the local drag direction, film grain. Uniforms: `uTexture`,
-   `tSim`, `uTime`, `uMouse`, `uMouseDir`, `uVelocity`, `uIntensity`
-   (CPU envelope, rest floor > 0), `uMaxShift`, `uResolution`,
-   `uImageResolution`.
+## Liquid surfaces (hero + work cards) — shader contract
 
-CPU-side envelope lives in `useGlitchUniforms.ts` (fast attack, two-stage
-release to a non-zero rest floor → grain never dies). Physics constants:
-`PARTICLE` in `lib/motion.ts`. Requires renderable half-float targets
-(`EXT_color_buffer_(half_)float`) — missing ⇒ static-image fallback.
+One shader, `liquid.frag`, two instances driven purely by uniforms:
+
+| Uniform | Meaning |
+| --- | --- |
+| `uTop` / `uBottom` | the two hero layers; the card binds one texture to both |
+| `uMask` | `1` = hero aperture, `0` = card (single layer, no aperture) |
+| `uReveal` | 0–1 aperture openness, CPU-driven by cursor speed with inertia |
+| `uPush` | 0–1 cursor-push envelope (cards) |
+| `uScroll` | 0–1 scroll warp envelope, from Lenis velocity |
+| `uCursor` | cursor 0–1 (hero: viewport; card: its own box) |
+| `uMaxRadius`, `uEdgeDistort`, `uInteriorFlow` | aperture size / boundary wobble / inner ripple |
+| `uPushAmp`, `uPushRadius`, `uWarpAmp` | per-instance displacement ceilings |
+| `uTime`, `uResolution`, `uImageResolution` | clock + cover-fit math |
+
+**Hero:** the aperture opens at the cursor and reveals `portrait-bottom`
+through a boundary wobbled by `lqFlow` (never a clean circle); its radius
+tracks cursor speed, easing open fast and shut slowly, and the mask fades
+out as it shrinks so at rest **only the top layer remains**.
+**Card:** no aperture — the project image must stay readable — just a
+liquid push around the cursor at roughly half the hero's ceiling.
+
+CPU envelopes live in `useLiquidDynamics.ts` (`LIQUID` constants in
+`lib/motion.ts`). Note the canvas is `pointer-events-none`, so **pointer
+input is taken from `window`** and normalized to the element's box —
+listening on the canvas element itself silently never fires.
 
 ## Mesh-text headlines (About + Contact)
 
@@ -101,8 +120,8 @@ renderer: density capped (dpr ≤ 0.75), pauses under the opaque expanded Work
 view and on tab blur; reduced motion ⇒ motionless frame (palette still live).
 No-WebGL fallback: the original CSS radial-blob mesh (kept in globals.css).
 
-Performance rules: **never more than two live glitch contexts** (hero + the
-one hovered card — cards mount/destroy their canvas on hover). MeshText and
+Performance rules: **never more than two live image-effect contexts** (hero +
+the one hovered card — cards mount/destroy their canvas on hover). MeshText and
 FluidGradient each own one low-cost context; every rAF loop pauses via
 IntersectionObserver off-screen and on tab blur. Reduced motion or WebGL
 failure ⇒ static image / DOM text + CSS grain overlay — the site must be
@@ -115,21 +134,28 @@ hardcode an image path in a component**. To swap in real assets, drop files at
 the exact existing paths (same filenames):
 
 ```
-public/hero/portrait.jpg                  (3840×2160)
+public/hero/portrait-top.jpg              (3840×2160) — visible by default
+public/hero/portrait-bottom.jpg           (3840×2160) — revealed by the aperture
 public/work/<slug>/main.jpg
 public/work/<slug>/detail-01.jpg … detail-04.jpg
 ```
 
+The two hero layers must be the **same dimensions and pixel-aligned** — the
+aperture cross-fades between them in place, so any offset reads as a jump.
+
 Slugs: `aurabrew`, `silvrbank`, `instantbox`, `bark`, `alejandra-pelay`.
 `scripts/generate-placeholders.mjs` creates placeholders for any *missing*
 file (it never overwrites an existing one): `npm run assets:placeholders`.
+A legacy `hero/portrait.jpg` is promoted to `portrait-top.jpg` by that
+script rather than regenerated, so a real portrait is never lost.
 
 ## Motion
 
 All durations/eases are named constants in `lib/motion.ts`: `DUR`/`EASE`
-(reveals, Flip open/close, expanded-content sequencing), `PARTICLE` (drag
-field), `MESH_TEXT` (headline physics), `FLUID` (background flow), `SCROLL`
-(Lenis). Intent: particle drag = dirty, magnetic, corrupted — not liquid.
+(reveals, Flip open/close, expanded-content sequencing), `LIQUID` (hero
+aperture, scroll warp, card hover), `MESH_TEXT` (headline physics), `FLUID`
+(background flow), `SCROLL` (Lenis). Intent: liquid = responsive to input,
+settling with inertia, never harsh — one water vocabulary everywhere.
 Mesh-text = inertial drag, elastic no-bounce return. Work expansion = weighty
 custom bezier; its content reveals only **after** the Flip completes (and
 leaves before the close Flip starts). Fluid background = scroll-driven,
