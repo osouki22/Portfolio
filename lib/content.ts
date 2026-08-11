@@ -7,11 +7,23 @@
 export const hero = {
   name: "Esteban Souki",
   role: "Senior Product Designer",
-  portrait: {
-    src: "/hero/portrait.jpg",
+  /**
+   * Two pixel-aligned full-bleed layers, both 3840×2160. The top layer is
+   * what you see; the bottom layer is revealed through the liquid aperture
+   * that opens at the cursor. Swap either by dropping a file at the same
+   * path — no code change.
+   */
+  portraitTop: {
+    src: "/hero/portrait-top.jpg",
     width: 3840,
     height: 2160,
     alt: "Portrait of Esteban Souki",
+  },
+  portraitBottom: {
+    src: "/hero/portrait-bottom.jpg",
+    width: 3840,
+    height: 2160,
+    alt: "",
   },
   /**
    * Which side of the portrait holds the negative space (and therefore the

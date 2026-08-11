@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import LiquidCanvas from "@/components/gl/LiquidCanvas";
 import { hero } from "@/lib/content";
 import { gsap, setupGsap } from "@/lib/gsapSetup";
-import { DUR, EASE } from "@/lib/motion";
+import { DUR, EASE, LIQUID } from "@/lib/motion";
+import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
 
 /**
  * Full-viewport hero. The portrait fills the frame; the name and role sit
@@ -14,6 +16,9 @@ import { DUR, EASE } from "@/lib/motion";
  */
 export default function Hero() {
   const textRef = useRef<HTMLDivElement>(null);
+  const [webglOk, setWebglOk] = useState(true);
+  const reduced = useReducedMotion();
+  const isTouch = useIsTouch();
 
   useEffect(() => {
     setupGsap();
@@ -49,21 +54,37 @@ export default function Hero() {
       aria-label="Intro"
       className="relative h-svh min-h-[540px] overflow-hidden"
     >
-      {/* Portrait layer — static image beneath, glitch canvas above when live */}
+      {/* Portrait: the top layer as a static image, with the liquid canvas
+          above it when live — it composites both layers itself */}
       <div className="absolute inset-0" data-hero-media>
         <Image
-          src={hero.portrait.src}
-          alt={hero.portrait.alt}
-          width={hero.portrait.width}
-          height={hero.portrait.height}
+          src={hero.portraitTop.src}
+          alt={hero.portraitTop.alt}
+          width={hero.portraitTop.width}
+          height={hero.portraitTop.height}
           priority
           sizes="100vw"
           className="h-full w-full object-cover"
         />
-        <div className="grain-overlay" aria-hidden="true" />
+        {!reduced && webglOk ? (
+          <LiquidCanvas
+            src={hero.portraitTop.src}
+            revealSrc={hero.portraitBottom.src}
+            maxRadius={LIQUID.maxRadius}
+            pushAmp={0}
+            warpAmp={LIQUID.heroWarpAmp}
+            dprCap={LIQUID.heroDprCap}
+            trackWindow
+            ambient={isTouch}
+            onContextFail={() => setWebglOk(false)}
+          />
+        ) : (
+          /* static top layer + mild grain when the shader can't (or shouldn't) run */
+          <div className="grain-overlay" aria-hidden="true" />
+        )}
       </div>
 
-      {/* Name + role — clean DOM type above the canvas, never glitched */}
+      {/* Name + role — clean DOM type above the canvas, never distorted */}
       <div
         ref={textRef}
         className={`absolute inset-0 z-10 flex flex-col justify-end pb-[10vh] px-[6vw] pointer-events-none ${

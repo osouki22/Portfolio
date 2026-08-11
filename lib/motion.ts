@@ -48,6 +48,56 @@ export const EASE = {
   palette: "sine.inOut",
 } as const;
 
+/**
+ * Liquid surfaces — hero reveal aperture + work-card hover.
+ * Shares the noise/flow vocabulary of the fluid background
+ * (components/gl/shaders/liquid.glsl).
+ */
+export const LIQUID = {
+  /* --- hero aperture (cursor-driven reveal of the bottom layer) --- */
+  /** widest the window ever opens, in aspect-corrected uv units */
+  maxRadius: 0.46,
+  /** cursor speed → aperture openness (speed is uv/second) */
+  velocityResponse: 1.5,
+  /** per-frame lerp while opening — quick to answer fast motion */
+  openInertia: 0.14,
+  /** per-frame lerp while closing — slower, liquid settling shut */
+  closeInertia: 0.045,
+  /** how much the shared flow field wobbles the aperture boundary */
+  edgeDistort: 0.5,
+  /** ripple applied to the revealed layer inside the window */
+  interiorFlow: 0.03,
+
+  /* --- scroll-driven warp of the hero surface (Lenis velocity) --- */
+  /** scroll velocity → warp envelope */
+  scrollResponse: 0.03,
+  /** per-second decay of the warp once scrolling stops */
+  scrollDecay: 2.2,
+  /** uv displacement at full warp — deliberately subtle */
+  heroWarpAmp: 0.014,
+
+  /* --- work-card hover (a supporting echo, not the signature) --- */
+  /** max liquid displacement on a card ≈ 55 % of the hero's warp character */
+  cardPushAmp: 0.055,
+  /** falloff radius of the push around the cursor */
+  cardPushRadius: 0.42,
+  /** per-frame lerp of the card push envelope while the cursor moves */
+  cardInertia: 0.12,
+  /** per-second decay of the card push once the cursor slows or leaves */
+  cardDecay: 2.4,
+  /** cards get a gentler share of the scroll warp than the hero */
+  cardWarpAmp: 0.008,
+
+  /* --- shared --- */
+  /** autonomous drift level on touch devices, so mobile is never dead */
+  ambient: 0.28,
+  /** idle seconds before the ambient drift takes over on touch */
+  ambientIdle: 1.6,
+  /** device-pixel-ratio ceilings */
+  heroDprCap: 1.75,
+  cardDprCap: 1.5,
+} as const;
+
 /** Deformable mesh-text (About + Contact headlines) — reference physics. */
 export const MESH_TEXT = {
   gridW: 96,

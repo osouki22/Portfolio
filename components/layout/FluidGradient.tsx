@@ -5,7 +5,11 @@ import { Renderer, Program, Mesh, Triangle } from "ogl";
 import { getLenis } from "@/lib/scroll";
 import { FLUID } from "@/lib/motion";
 import vertex from "./../gl/shaders/quad.vert";
-import fragment from "./../gl/shaders/fluid.frag";
+import liquidChunk from "./../gl/shaders/liquid.glsl";
+import fluidBody from "./../gl/shaders/fluid.frag";
+
+/** shared liquid vocabulary + this surface's body */
+const fragment = `${liquidChunk}\n${fluidBody}`;
 
 interface FluidGradientProps {
   /** reports whether the WebGL fluid is live (false → CSS fallback stays) */
