@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import { forwardRef, useState } from "react";
-import LiquidCanvas from "@/components/gl/LiquidCanvas";
+import FluidDistortion from "@/components/gl/FluidDistortion";
 import type { WorkProject } from "@/lib/work";
-import { LIQUID } from "@/lib/motion";
-import { useIsTouch, useReducedMotion } from "@/lib/useMediaQuery";
+import { CARD_FLUID } from "@/lib/motion";
+import { useReducedMotion } from "@/lib/useMediaQuery";
 
 interface WorkCardProps {
   project: WorkProject;
@@ -43,9 +43,9 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
 ) {
   const [webglOk, setWebglOk] = useState(true);
   const reduced = useReducedMotion();
-  const isTouch = useIsTouch();
 
-  const showLiquid = liquidActive && !reduced && webglOk;
+  const showFluid =
+    liquidActive && CARD_FLUID.enabled && !reduced && webglOk;
 
   return (
     <div ref={ref} data-work-card={project.slug} className="group">
@@ -74,14 +74,9 @@ const WorkCard = forwardRef<HTMLDivElement, WorkCardProps>(function WorkCard(
             sizes="(max-width: 768px) 92vw, 44vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.025]"
           />
-          {showLiquid && (
-            <LiquidCanvas
+          {showFluid && (
+            <FluidDistortion
               src={project.mainImage}
-              pushAmp={LIQUID.cardPushAmp}
-              pushRadius={LIQUID.cardPushRadius}
-              warpAmp={LIQUID.cardWarpAmp}
-              dprCap={LIQUID.cardDprCap}
-              ambient={isTouch}
               onContextFail={() => setWebglOk(false)}
             />
           )}

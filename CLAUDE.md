@@ -29,9 +29,9 @@ components/
   layout/       SideNav, SmoothScroll (Lenis), MeshGradient (host), FluidGradient
   sections/     Hero, About, Work, Contact
   work/         WorkGrid, WorkCard, WorkExpanded
-  gl/           LiquidCanvas (hero mask + card hover), MeshText,
+  gl/           LiquidCanvas (hero mask), FluidDistortion (card hover), MeshText,
                 useLiquidDynamics,
-                shaders/ (quad.vert, liquid.glsl ← shared chunk,
+                shaders/ (quad.vert, liquid.glsl ← shared chunk, fluidsim.ts,
                           liquid.frag, fluid.frag, meshtext.vert/.frag)
 lib/
   palettes.ts   ALL palettes — single source of truth for color
@@ -71,14 +71,15 @@ shaders are imported as raw strings. `fluid.frag` (background), and
 `liquid.frag` (hero + cards) all ride it — change the noise here and the
 whole site changes together.
 
-## Liquid surfaces (hero + work cards) — shader contract
+## Liquid surface (hero) — shader contract
 
-One shader, `liquid.frag`, two instances driven purely by uniforms:
+`liquid.frag` now drives the **hero only**; work cards use the fluid
+solver documented below. Its uniforms:
 
 | Uniform | Meaning |
 | --- | --- |
-| `uTop` / `uBottom` | the two hero layers; the card binds one texture to both |
-| `uMask` | `1` = hero aperture, `0` = card (single layer, no aperture) |
+| `uTop` / `uBottom` | the two hero layers |
+| `uMask` | `1` = aperture, `0` = single layer (no aperture) |
 | `uReveal` | 0–1 aperture openness, CPU-driven by cursor speed with inertia |
 | `uPush` | 0–1 cursor-push envelope (cards) |
 | `uScroll` | 0–1 scroll warp envelope, from Lenis velocity |
@@ -87,12 +88,17 @@ One shader, `liquid.frag`, two instances driven purely by uniforms:
 | `uPushAmp`, `uPushRadius`, `uWarpAmp` | per-instance displacement ceilings |
 | `uTime`, `uResolution`, `uImageResolution` | clock + cover-fit math |
 
-**Hero:** the aperture opens at the cursor and reveals `portrait-bottom`
-through a boundary wobbled by `lqFlow` (never a clean circle); its radius
+The aperture opens at the cursor and reveals `portrait-bottom`; its radius
 tracks cursor speed, easing open fast and shut slowly, and the mask fades
 out as it shrinks so at rest **only the top layer remains**.
-**Card:** no aperture — the project image must stay readable — just a
-liquid push around the cursor at roughly half the hero's ceiling.
+
+**Confirmed decision: the mouse must not undulate anything in the hero.**
+Moving the cursor only opens and closes the window. `uEdgeDistort` (the
+boundary wobble, which could break the edge into gaps showing the page
+through) and `uInteriorFlow` (the ripple over the revealed layer, which
+deformed the face) are both **0** and their noise is branch-skipped. The
+scroll-driven effects — `uScroll` warp, body flex, silhouette bow — are a
+separate axis and stay fully on; keep them separable when editing.
 
 **Hero body flex** (`lib/useLiquidBody.ts`) is a third, *element-level*
 layer on top of those two: a CSS transform on the hero media block driven
@@ -120,7 +126,27 @@ fluid background shows through the curve. Master knob:
 subtle — raise it to ~8–9 to inspect the shape).
 
 CPU envelopes live in `useLiquidDynamics.ts` (`LIQUID` constants in
-`lib/motion.ts`). Note the canvas is `pointer-events-none`, so **pointer
+`lib/motion.ts`).
+
+## Work-card fluid distortion
+
+Cards do **not** use `liquid.frag`. Each hovered card runs a real fluid
+solver (`components/gl/FluidDistortion.tsx` + `shaders/fluidsim.ts`,
+adapted from an external reference — shaders kept verbatim): splat →
+divergence → pressure (Jacobi ×16) → gradient subtract → advection, on
+float framebuffers, displacing the project image under the cursor and
+settling through dissipation. The image always comes from `lib/work.ts`
+(local path), never a remote URL. Constants: `CARD_FLUID` in
+`lib/motion.ts`.
+
+Rules: it needs `OES_texture_float` and complete float FBOs — either
+missing degrades silently to the static image. **Only the hovered card
+mounts it** (`liquidActive` in `WorkGrid`), so exactly one simulation is
+ever alive; its rAF pauses off-screen and on tab blur, and every GL
+resource is released on unmount because that happens on every hover-out.
+The quad buffers are created once (the reference rebuilt them per blit,
+leaking hundreds per second). Touch listeners are passive — unlike the
+reference this never preventDefaults, so a drag over a card still scrolls. Note the canvas is `pointer-events-none`, so **pointer
 input is taken from `window`** and normalized to the element's box —
 listening on the canvas element itself silently never fires.
 

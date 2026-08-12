@@ -150,6 +150,40 @@ export const LIQUID = {
   cardDprCap: 1.5,
 } as const;
 
+/**
+ * Work-card fluid distortion — a real Navier-Stokes style solver
+ * (velocity → divergence → pressure → gradient subtract → advection) on
+ * float framebuffers, displacing the project image under the cursor.
+ * Entirely separate from the hero's LIQUID block so the two can be tuned,
+ * or switched off, independently. Only the hovered card ever runs it.
+ */
+export const CARD_FLUID = {
+  /** master switch for the card hover effect */
+  enabled: true,
+  /** 1–10 → simulation grid height of 128–512 texels (cost grows fast) */
+  resolution: 10,
+  /** splat radius in px — how wide the cursor's push is */
+  cursorSize: 50,
+  /** 0–100 → drives both the splat strength and the image displacement */
+  intensity: 50,
+  /** how fast the velocity field dies down (lower = settles sooner) */
+  velocityDissipation: 0.97,
+  /** how fast the displacement field fades (lower = image recovers sooner) */
+  colorDissipation: 0.98,
+  /** Jacobi iterations for the pressure solve — the main per-frame cost */
+  pressureIterations: 16,
+  /** dt multiplier for advecting the displacement field */
+  colorAdvectionBoost: 8,
+  /** pointer delta multiplier feeding the splat */
+  pointerBoost: 6,
+  /** canvas drawn larger than the card so the fluid can push past the edge */
+  overscan: 1.2,
+  /** image inset inside that overscan */
+  innerScale: 5 / 6,
+  /** device-pixel-ratio ceiling, in line with the rest of the site */
+  dprCap: 1.5,
+} as const;
+
 /** Deformable mesh-text (About + Contact headlines) — reference physics. */
 export const MESH_TEXT = {
   gridW: 96,
