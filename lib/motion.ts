@@ -63,10 +63,17 @@ export const LIQUID = {
   openInertia: 0.14,
   /** per-frame lerp while closing — slower, liquid settling shut */
   closeInertia: 0.045,
-  /** how much the shared flow field wobbles the aperture boundary */
-  edgeDistort: 0.5,
-  /** ripple applied to the revealed layer inside the window */
-  interiorFlow: 0.03,
+  /**
+   * Mouse-driven undulation, both OFF (0) by design: moving the cursor
+   * must only open and close the window, never ripple anything.
+   *  - edgeDistort wobbled the aperture boundary, which could break the
+   *    edge into gaps that showed the page through.
+   *  - interiorFlow rippled the revealed layer, deforming the face.
+   * Raise either above 0 to bring that undulation back. Neither touches
+   * the scroll effects (scrollResponse / heroWarpAmp / silhouette*).
+   */
+  edgeDistort: 0,
+  interiorFlow: 0,
 
   /* --- scroll-driven warp of the hero surface (Lenis velocity) --- */
   /** scroll velocity → warp envelope */
