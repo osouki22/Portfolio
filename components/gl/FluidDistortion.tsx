@@ -84,7 +84,8 @@ export default function FluidDistortion({
     const params = {
       cursorRadiusPx: CARD_FLUID.cursorSize,
       cursorPower: 5 + ((cp - 0.1) * (50 - 5)) / (1 - 0.1),
-      distortionPower: CARD_FLUID.intensity / 100,
+      distortionPower:
+        (CARD_FLUID.intensity / 100) * CARD_FLUID.displacementBoost,
     };
     const overscanFactor = CARD_FLUID.overscan;
     const innerScale = CARD_FLUID.innerScale;

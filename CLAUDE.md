@@ -139,6 +139,14 @@ settling through dissipation. The image always comes from `lib/work.ts`
 (local path), never a remote URL. Constants: `CARD_FLUID` in
 `lib/motion.ts`.
 
+**Amplitude gotcha:** the reference's own scaling tops out around **2 px**
+of displacement on a card this size — the solver runs perfectly and the
+effect still looks like nothing at all. `CARD_FLUID.displacementBoost`
+(3 = shipped, 1 = the reference's amplitude, 6 = very pronounced) is the
+knob that makes it visible; `intensity` feeds both it and the splat.
+A flat-colour image also shows nothing, since there are no pixels to
+displace — judge the effect on a real project image.
+
 Rules: it needs `OES_texture_float` and complete float FBOs — either
 missing degrades silently to the static image. **Only the hovered card
 mounts it** (`liquidActive` in `WorkGrid`), so exactly one simulation is

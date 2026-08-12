@@ -165,7 +165,14 @@ export const CARD_FLUID = {
   /** splat radius in px — how wide the cursor's push is */
   cursorSize: 50,
   /** 0–100 → drives both the splat strength and the image displacement */
-  intensity: 50,
+  intensity: 100,
+  /**
+   * Multiplier on the final uv displacement. The reference's own scaling
+   * tops out at roughly 2 px of movement on a card this size, which reads
+   * as "the effect is broken" — this is the knob that makes the ripple
+   * actually visible. 1 = the reference's amplitude.
+   */
+  displacementBoost: 3,
   /** how fast the velocity field dies down (lower = settles sooner) */
   velocityDissipation: 0.97,
   /** how fast the displacement field fades (lower = image recovers sooner) */
