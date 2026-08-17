@@ -72,6 +72,12 @@ export default function FluidDistortion({
       onContextFail?.();
       return;
     }
+    // a context handed back in a lost state can still be revived; don't
+    // disable the card permanently for it
+    if (gl.isContextLost()) {
+      gl.getExtension("WEBGL_lose_context")?.restoreContext();
+      return;
+    }
     // the solver needs float render targets
     if (!gl.getExtension("OES_texture_float")) {
       onContextFail?.();
@@ -610,7 +616,12 @@ export default function FluidDistortion({
       gl.deleteBuffer(ebo);
       programs.forEach((p) => gl.deleteProgram(p));
       shaders.forEach((s) => gl.deleteShader(s));
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      // NOTE: deliberately no loseContext() here. This canvas comes from JSX,
+      // so React StrictMode's mount → cleanup → mount cycle in development
+      // hands the *same* element to the second mount; a context lost during
+      // the first cleanup comes back lost, getExtension() then returns null,
+      // and the card would disable itself for good with no console error.
+      // Dropping the resources is enough — the context dies with the element.
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
