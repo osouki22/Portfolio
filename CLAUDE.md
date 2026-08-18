@@ -137,6 +137,23 @@ subtle — raise it to ~8–9 to inspect the shape).
 CPU envelopes live in `useLiquidDynamics.ts` (`LIQUID` constants in
 `lib/motion.ts`).
 
+## Custom cursor
+
+`components/layout/CustomCursor.tsx` (mounted in `app/layout.tsx`) replaces
+the native pointer with a hollow ring on **fine-pointer devices only** —
+`matchMedia('(pointer: fine)')` gates everything, so touch keeps its normal
+behaviour and the native cursor is never hidden there. Hiding is done by
+`html[data-custom-cursor] { cursor: none }`, an attribute the component sets
+and always removes on cleanup, so nothing can leave the page cursor-less.
+
+One fixed element, one rAF lerping toward the pointer (`CURSOR.followLerp`,
+frame-rate compensated; reduced motion pins it to the pointer instead).
+Hover state comes from `e.target.closest(...)` over one selector — the GL
+canvases are `pointer-events-none`, so the target is always the real DOM
+element underneath. `mix-blend-mode: difference` keeps the ring legible on
+light and dark alike; set `CURSOR.blendMode` to `"normal"` for literal white.
+Constants: `CURSOR` in `lib/motion.ts`.
+
 ## Work-card fluid distortion
 
 Cards do **not** use `liquid.frag`. Each hovered card runs a real fluid

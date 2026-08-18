@@ -176,6 +176,40 @@ export const LIQUID = {
 } as const;
 
 /**
+ * Custom cursor — a hollow ring that replaces the native pointer on
+ * fine-pointer devices. Purely visual: it never intercepts input.
+ */
+export const CURSOR = {
+  /** master switch for the whole custom cursor */
+  enabled: true,
+  /** diameter in px at rest */
+  size: 40,
+  /** diameter in px over interactive elements */
+  hoverSize: 50,
+  /** ring thickness in px at rest */
+  thickness: 2,
+  /** ring thickness in px over interactive elements */
+  hoverThickness: 4,
+  /** ring colour */
+  color: "#ffffff",
+  /** duration of the rest ↔ hover transition, in ms */
+  transitionMs: 220,
+  /**
+   * Per-frame follow factor: how much of the remaining distance to the
+   * pointer the ring covers each frame. Lower ⇒ more float/lag.
+   * Set to 1 for instant, glued-to-the-pointer tracking.
+   */
+  followLerp: 0.18,
+  /**
+   * "difference" keeps the ring legible on light *and* dark backgrounds by
+   * inverting whatever is behind it; "normal" renders it literally white.
+   */
+  blendMode: "difference" as "difference" | "normal",
+  /** above everything, including the expanded work view (z-50) */
+  zIndex: 9999,
+} as const;
+
+/**
  * Work-card fluid distortion — a real Navier-Stokes style solver
  * (velocity → divergence → pressure → gradient subtract → advection) on
  * float framebuffers, displacing the project image under the cursor.

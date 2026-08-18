@@ -67,6 +67,29 @@ body {
   transform: scaleX(1);
 }
 
+/* ---------------------------------------------------------------------------
+   Custom cursor — a hollow ring replacing the native pointer on fine-pointer
+   devices. The element is positioned and sized from lib/motion.ts (CURSOR);
+   only the structural bits live here.
+--------------------------------------------------------------------------- */
+
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+}
+
+/* the attribute is set by CustomCursor only when a fine pointer is present,
+   so touch devices always keep their normal cursor */
+html[data-custom-cursor],
+html[data-custom-cursor] * {
+  cursor: none !important;
+}
+
 /* Page scroll lock while the expanded work view is open */
 html.scroll-locked,
 html.scroll-locked body {

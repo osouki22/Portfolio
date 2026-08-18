@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import MeshGradient from "@/components/layout/MeshGradient";
 import SmoothScroll from "@/components/layout/SmoothScroll";
+import CustomCursor from "@/components/layout/CustomCursor";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="font-sans">
         <MeshGradient />
         <SmoothScroll>{children}</SmoothScroll>
+        <CustomCursor />
       </body>
     </html>
   );
