@@ -56,7 +56,7 @@ export const EASE = {
 export const LIQUID = {
   /* --- hero aperture (cursor-driven reveal of the bottom layer) --- */
   /** widest the window ever opens, in aspect-corrected uv units */
-  maxRadius: 0.46,
+  maxRadius: 0.20,
   /** cursor speed → aperture openness (speed is uv/second) */
   velocityResponse: 1.5,
   /** per-frame lerp while opening — quick to answer fast motion */
@@ -88,7 +88,7 @@ export const LIQUID = {
   /** lag in seconds of the leading centre — it tracks the cursor closely */
   blobLeadLag: 0.05,
   /** lag of the last centre — this is what produces the trailing tail */
-  blobTailLag: 0.32,
+  blobTailLag: 0.5,
   /** head radius as a fraction of maxRadius */
   blobHeadScale: 1.0,
   /** tail radius as a fraction of maxRadius (smaller ⇒ it tapers) */
@@ -98,7 +98,7 @@ export const LIQUID = {
   /** width of that threshold — higher ⇒ softer, gooier fusion */
   gooSoftness: 0.3,
   /** how much cursor speed lengthens the lag, stretching the tail */
-  tailStretch: 0.9,
+  tailStretch: 1.6,
 
   /* --- scroll-driven warp of the hero surface (Lenis velocity) --- */
   /** scroll velocity → warp envelope */
