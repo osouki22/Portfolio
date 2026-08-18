@@ -191,39 +191,77 @@ export default function Work() {
 
     closingRef.current = true;
 
+    const root = document.querySelector<HTMLElement>("[data-work-expanded]");
+    const slot = document.querySelector<HTMLElement>(
+      "[data-expanded-media-slot]"
+    );
+
+    /**
+     * Rewind the detail's own scroll before the Flip, so the media is back
+     * on screen and the close mirrors the opening. Proportional to the
+     * distance and capped, so a shallow scroll barely delays anything.
+     */
+    const scrolled = root ? root.scrollTop : 0;
+    const rewind =
+      scrolled > 1
+        ? Math.min(DUR.expandRewindMax, Math.max(0.2, scrolled / 4000))
+        : 0;
+
     // reverse of the open sequencing: content leaves first, then the Flip
-    const flipStart = DUR.expandContentOut * 0.85;
-    const tl = gsap.timeline({
-      onComplete: () => finishClose(slug),
-    });
+    const flipStart = rewind + DUR.expandContentOut * 0.85;
+    const tl = gsap.timeline();
     tl.to(
       reveals,
       { opacity: 0, duration: DUR.expandContentOut, ease: "power1.in" },
       0
     );
-    tl.to(
-      bg,
-      { opacity: 0, duration: DUR.expandClose, ease: "power2.inOut" },
-      flipStart
-    );
-    tl.add(
-      Flip.fit(expandedMedia, card, {
-        absolute: true,
-        duration: DUR.expandClose,
-        ease: EASE.expansion,
-      }) as gsap.core.Tween,
-      flipStart
-    );
-    tl.to(
-      otherCards(slug ?? ""),
-      {
-        opacity: 1,
-        scale: 1,
-        duration: DUR.gridRecede,
-        ease: EASE.out,
-        stagger: 0.04,
+    if (root && rewind > 0) {
+      tl.to(root, { scrollTop: 0, duration: rewind, ease: EASE.inOut }, 0);
+    }
+    /**
+     * Everything below is created *inside* a call, i.e. after the rewind has
+     * finished. Flip.fit measures the element the moment it is built, so
+     * building it up front would have captured the pre-rewind geometry and
+     * flown from the wrong place.
+     */
+    tl.call(
+      () => {
+        /**
+         * Freeze the wrapper's height *before* Flip pulls the media out of
+         * the flow. Otherwise the scroller's height drops by the media's
+         * height and the browser clamps scrollTop instantly — the jump this
+         * whole sequence exists to avoid.
+         */
+        if (slot) slot.style.height = `${slot.offsetHeight}px`;
+
+        Flip.fit(expandedMedia, card, {
+          absolute: true,
+          duration: DUR.expandClose,
+          ease: EASE.expansion,
+        });
+
+        if (bg) {
+          gsap.to(bg, {
+            opacity: 0,
+            duration: DUR.expandClose,
+            ease: "power2.inOut",
+          });
+        }
+        gsap.to(otherCards(slug ?? ""), {
+          opacity: 1,
+          scale: 1,
+          duration: DUR.gridRecede,
+          ease: EASE.out,
+          stagger: 0.04,
+          delay: 0.05,
+        });
+
+        // Flip.fit can return null (nothing to animate); the teardown must
+        // still run, so completion is timed rather than tween-driven.
+        gsap.delayedCall(DUR.expandClose, () => finishClose(slug));
       },
-      flipStart + 0.05
+      undefined,
+      flipStart
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finishClose]);

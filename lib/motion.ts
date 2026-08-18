@@ -23,6 +23,13 @@ export const DUR = {
   expandContentIn: 0.6,
   /** expanded content fade-out before the close Flip starts */
   expandContentOut: 0.2,
+  /**
+   * Closing from deep inside a project first rewinds the detail's own
+   * scroll so the media is back under the reader's eye before the Flip —
+   * the mirror of the opening. Capped; short scrolls take proportionally
+   * less. 0 disables the rewind (the Flip then starts off-screen).
+   */
+  expandRewindMax: 0.5,
   /** scroll-in reveal of section content */
   reveal: 1.0,
   /** grid cards fading back when one expands */

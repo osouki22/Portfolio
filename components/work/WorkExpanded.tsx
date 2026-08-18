@@ -99,8 +99,14 @@ export default function WorkExpanded({
         </svg>
       </button>
 
-      {/* Shared-element media — flip target */}
-      <div className="px-0 md:px-[4vw] md:pt-[4vh]">
+      {/* Shared-element media — flip target. The wrapper is tagged so the
+          close sequence can freeze its height before the media leaves the
+          flow; without that the scroller shrinks and the browser clamps
+          scrollTop, which reads as an instant jump. */}
+      <div
+        data-expanded-media-slot
+        className="px-0 md:px-[4vw] md:pt-[4vh]"
+      >
         <div
           data-expanded-media
           data-flip-id={`work-media-${project.slug}`}
