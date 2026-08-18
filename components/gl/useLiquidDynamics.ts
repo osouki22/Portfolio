@@ -22,6 +22,12 @@ import { getLenis } from "@/lib/scroll";
 
 export interface LiquidDynamics {
   cursor: { x: number; y: number };
+  /**
+   * Aperture centres, head first. Each chases the cursor with a longer lag
+   * than the one before it, which is what gives the opening its trailing
+   * tail; summed and thresholded in the shader they fuse into one goo blob.
+   */
+  blobs: { x: number; y: number }[];
   /** smoothed cursor speed, roughly 0–1 */
   speed: number;
   reveal: number;
@@ -42,8 +48,11 @@ export function createLiquidDynamics(ambient: boolean): LiquidDynamics {
   let speedTarget = 0;
   let lastScrollY = typeof window === "undefined" ? 0 : window.scrollY;
 
+  const blobCount = Math.max(1, Math.min(5, LIQUID.blobCount));
+
   const d: LiquidDynamics = {
     cursor: { x: 0.5, y: 0.5 },
+    blobs: Array.from({ length: blobCount }, () => ({ x: 0.5, y: 0.5 })),
     speed: 0,
     reveal: 0,
     push: 0,
@@ -104,6 +113,28 @@ export function createLiquidDynamics(ambient: boolean): LiquidDynamics {
         (revealTarget - d.reveal) *
         f(revealTarget > d.reveal ? LIQUID.openInertia : LIQUID.closeInertia);
       if (d.reveal < 0.01 && revealTarget === 0) d.reveal = 0;
+
+      // --- aperture centres: each lags more than the one ahead of it ------
+      // Faster cursor ⇒ longer lag ⇒ the tail stretches out behind it.
+      const stretch = 1 + d.speed * LIQUID.tailStretch;
+      for (let i = 0; i < d.blobs.length; i++) {
+        const b = d.blobs[i];
+        if (d.reveal === 0) {
+          // window shut: collapse everything onto the cursor so the next
+          // opening starts clean instead of dragging a stale tail
+          b.x = d.cursor.x;
+          b.y = d.cursor.y;
+          continue;
+        }
+        const t = d.blobs.length > 1 ? i / (d.blobs.length - 1) : 0;
+        const lag =
+          (LIQUID.blobLeadLag +
+            (LIQUID.blobTailLag - LIQUID.blobLeadLag) * t) *
+          stretch;
+        const k = 1 - Math.exp(-dt / Math.max(lag / 3, 1e-4));
+        b.x += (d.cursor.x - b.x) * k;
+        b.y += (d.cursor.y - b.y) * k;
+      }
 
       // --- card push ------------------------------------------------------
       const pushTarget = hasPointer ? Math.min(1, d.speed * 1.35) : 0;

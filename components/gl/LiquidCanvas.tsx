@@ -111,6 +111,13 @@ export default function LiquidCanvas({
         uResolution: { value: [1, 1] },
         uImageResolution: { value: [1, 1] },
         uMaxRadius: { value: maxRadius },
+        uBlob0: { value: [0.5, 0.5, 0] },
+        uBlob1: { value: [0.5, 0.5, 0] },
+        uBlob2: { value: [0.5, 0.5, 0] },
+        uBlob3: { value: [0.5, 0.5, 0] },
+        uBlob4: { value: [0.5, 0.5, 0] },
+        uGooThreshold: { value: LIQUID.gooThreshold },
+        uGooSoftness: { value: LIQUID.gooSoftness },
         uEdgeDistort: { value: LIQUID.edgeDistort },
         uInteriorFlow: { value: LIQUID.interiorFlow },
         uWarpAmp: { value: warpAmp },
@@ -223,6 +230,27 @@ export default function LiquidCanvas({
       program.uniforms.uTime.value = elapsed;
       program.uniforms.uCursor.value = [dynamics.cursor.x, dynamics.cursor.y];
       program.uniforms.uReveal.value = dynamics.reveal;
+
+      // aperture centres: head radius tapers to the tail, and every radius
+      // carries uReveal so a shut window leaves an empty field
+      if (hasAperture) {
+        const blobs = dynamics.blobs;
+        const n = blobs.length;
+        for (let i = 0; i < 5; i++) {
+          const slot = program.uniforms[`uBlob${i}`].value as number[];
+          if (i < n) {
+            const t = n > 1 ? i / (n - 1) : 0;
+            const scale =
+              LIQUID.blobHeadScale +
+              (LIQUID.blobTailScale - LIQUID.blobHeadScale) * t;
+            slot[0] = blobs[i].x;
+            slot[1] = blobs[i].y;
+            slot[2] = maxRadius * dynamics.reveal * scale;
+          } else {
+            slot[2] = 0; // unused centre
+          }
+        }
+      }
       program.uniforms.uPush.value = dynamics.push;
       program.uniforms.uScroll.value = dynamics.scroll;
 

@@ -75,6 +75,31 @@ export const LIQUID = {
   edgeDistort: 0,
   interiorFlow: 0,
 
+  /**
+   * --- aperture shape: a goo blob, not a circle ---
+   * The opening is composed from several centres that chase the cursor with
+   * increasing lag; their fields are summed and thresholded, so they fuse
+   * into one organic shape that stretches and trails while the cursor moves
+   * and regroups when it stops. Purely the *silhouette* of the mask — the
+   * revealed layer itself is never distorted (see edgeDistort/interiorFlow).
+   */
+  /** number of centres composing the aperture (shader maximum is 5) */
+  blobCount: 4,
+  /** lag in seconds of the leading centre — it tracks the cursor closely */
+  blobLeadLag: 0.05,
+  /** lag of the last centre — this is what produces the trailing tail */
+  blobTailLag: 0.32,
+  /** head radius as a fraction of maxRadius */
+  blobHeadScale: 1.0,
+  /** tail radius as a fraction of maxRadius (smaller ⇒ it tapers) */
+  blobTailScale: 0.55,
+  /** field level counted as inside the blob — lower ⇒ fatter shape */
+  gooThreshold: 0.5,
+  /** width of that threshold — higher ⇒ softer, gooier fusion */
+  gooSoftness: 0.3,
+  /** how much cursor speed lengthens the lag, stretching the tail */
+  tailStretch: 0.9,
+
   /* --- scroll-driven warp of the hero surface (Lenis velocity) --- */
   /** scroll velocity → warp envelope */
   scrollResponse: 0.03,

@@ -88,9 +88,18 @@ solver documented below. Its uniforms:
 | `uPushAmp`, `uPushRadius`, `uWarpAmp` | per-instance displacement ceilings |
 | `uTime`, `uResolution`, `uImageResolution` | clock + cover-fit math |
 
-The aperture opens at the cursor and reveals `portrait-bottom`; its radius
+The aperture opens at the cursor and reveals `portrait-bottom`; its size
 tracks cursor speed, easing open fast and shut slowly, and the mask fades
 out as it shrinks so at rest **only the top layer remains**.
+
+Its *silhouette* is a goo blob, not a circle: `blobCount` centres chase the
+cursor with increasing lag (`useLiquidDynamics`), each contributing a
+gaussian field that the shader sums and thresholds (`gooThreshold` /
+`gooSoftness`), so they fuse into one organic shape that stretches and
+trails while the cursor moves and regroups when it stops. Centre radii
+carry `uReveal`, so a shut window is an empty field, and the centres
+collapse onto the cursor at rest so the next opening starts clean.
+This is purely the mask's outline — the revealed layer is never distorted.
 
 **Confirmed decision: the mouse must not undulate anything in the hero.**
 Moving the cursor only opens and closes the window. `uEdgeDistort` (the

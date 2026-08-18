@@ -26,6 +26,14 @@ uniform float uScroll;       // 0-1 scroll-driven warp envelope
 uniform vec2 uResolution;
 uniform vec2 uImageResolution;
 uniform float uMaxRadius;
+/* aperture centres: xy = position in uv, z = radius (0 ⇒ unused) */
+uniform vec3 uBlob0;
+uniform vec3 uBlob1;
+uniform vec3 uBlob2;
+uniform vec3 uBlob3;
+uniform vec3 uBlob4;
+uniform float uGooThreshold;
+uniform float uGooSoftness;
 uniform float uEdgeDistort;
 uniform float uInteriorFlow;
 uniform float uWarpAmp;
@@ -33,6 +41,15 @@ uniform float uPushAmp;
 uniform float uPushRadius;
 
 varying vec2 vUv;
+
+/* One aperture centre's contribution to the metaball field. Gaussian, so
+   neighbouring centres blend into a single gooey silhouette instead of
+   reading as separate circles. */
+float lqBlobField(vec3 blob, vec2 p, float asp) {
+  if (blob.z <= 0.0) return 0.0;
+  vec2 d = p - vec2(blob.x * asp, blob.y);
+  return exp(-dot(d, d) / (blob.z * blob.z));
+}
 
 /* object-fit: cover */
 vec2 coverUv(vec2 uv) {
@@ -72,20 +89,34 @@ void main() {
   }
 
   /* --- hero liquid aperture ---------------------------------------------
-     The aperture opens and closes with the cursor, but nothing here
-     undulates *because of* the mouse: the boundary wobble and the ripple
-     inside the revealed layer are both opt-in (uEdgeDistort / uInteriorFlow,
-     0 by default). With them off the edge is a clean soft circle — it can
-     no longer break into gaps — and the revealed layer stays pixel-crisp,
-     sampled at exactly the same uv as the top layer.
+     The aperture opens and closes with the cursor, and its *silhouette* is
+     a goo blob (below). What it reveals is never distorted by the mouse:
+     the boundary wobble and the ripple over the revealed layer are both
+     opt-in (uEdgeDistort / uInteriorFlow, 0 by default), so portrait-bottom
+     is sampled at exactly the same uv as the top layer and stays crisp.
      The scroll warp above still applies to both layers. */
-  float radius = uMaxRadius * uReveal;
-  float edge = dist;
+
+  /* metaball silhouette: several lagging centres summed into one field and
+     thresholded, so the opening stretches and trails behind the cursor
+     instead of being a circle. The centres' radii already carry uReveal,
+     so a closed window means an empty field. */
+  float field =
+      lqBlobField(uBlob0, ap, asp)
+    + lqBlobField(uBlob1, ap, asp)
+    + lqBlobField(uBlob2, ap, asp)
+    + lqBlobField(uBlob3, ap, asp)
+    + lqBlobField(uBlob4, ap, asp);
+
   if (uEdgeDistort > 0.0) {
     float wob = (lqFbm(ap * 5.0 + vec2(uTime * 0.35, -uTime * 0.27)) - 0.5) * 2.0;
-    edge += wob * uEdgeDistort * radius;
+    field += wob * uEdgeDistort;
   }
-  float mask = 1.0 - smoothstep(radius * 0.45, radius, edge);
+
+  float mask = smoothstep(
+    uGooThreshold - uGooSoftness,
+    uGooThreshold + uGooSoftness,
+    field
+  );
   /* the window fades as it shrinks, so closing leaves no speck behind —
      at rest the aperture is gone entirely and only the top layer remains */
   mask *= smoothstep(0.0, 0.09, uReveal);
