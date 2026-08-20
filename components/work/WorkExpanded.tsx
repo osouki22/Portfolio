@@ -173,7 +173,7 @@ export default function WorkExpanded({
               src={project.detailImages[0]}
               alt={`${project.title} — detail 1`}
               fill
-              sizes="(max-width: 768px) 100vw, 1800px"
+              sizes="(max-width: 768px) 100vw, 1920px"
               quality={90}
               className="object-cover"
             />
@@ -183,7 +183,7 @@ export default function WorkExpanded({
               src={project.detailImages[1]}
               alt={`${project.title} — detail 2`}
               fill
-              sizes="(max-width: 768px) 100vw, 1000px"
+              sizes="(max-width: 768px) 100vw, 1280px"
               quality={90}
               className="object-cover"
             />
@@ -193,7 +193,7 @@ export default function WorkExpanded({
               src={project.detailImages[2]}
               alt={`${project.title} — detail 3`}
               fill
-              sizes="(max-width: 768px) 100vw, 1200px"
+              sizes="(max-width: 768px) 100vw, 1280px"
               quality={90}
               className="object-cover"
             />
@@ -203,7 +203,7 @@ export default function WorkExpanded({
               src={project.detailImages[3]}
               alt={`${project.title} — detail 4`}
               fill
-              sizes="(max-width: 768px) 100vw, 1600px"
+              sizes="(max-width: 768px) 100vw, 1920px"
               quality={90}
               className="object-cover"
             />
