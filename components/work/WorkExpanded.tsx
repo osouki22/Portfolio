@@ -118,6 +118,7 @@ export default function WorkExpanded({
             fill
             priority
             sizes="100vw"
+            quality={90}
             className="object-cover"
           />
         </div>
@@ -172,7 +173,8 @@ export default function WorkExpanded({
               src={project.detailImages[0]}
               alt={`${project.title} — detail 1`}
               fill
-              sizes="(max-width: 768px) 92vw, 78vw"
+              sizes="(max-width: 768px) 100vw, 1800px"
+              quality={90}
               className="object-cover"
             />
           </div>
@@ -181,7 +183,8 @@ export default function WorkExpanded({
               src={project.detailImages[1]}
               alt={`${project.title} — detail 2`}
               fill
-              sizes="(max-width: 768px) 92vw, 36vw"
+              sizes="(max-width: 768px) 100vw, 1000px"
+              quality={90}
               className="object-cover"
             />
           </div>
@@ -190,7 +193,8 @@ export default function WorkExpanded({
               src={project.detailImages[2]}
               alt={`${project.title} — detail 3`}
               fill
-              sizes="(max-width: 768px) 92vw, 44vw"
+              sizes="(max-width: 768px) 100vw, 1200px"
+              quality={90}
               className="object-cover"
             />
           </div>
@@ -199,7 +203,8 @@ export default function WorkExpanded({
               src={project.detailImages[3]}
               alt={`${project.title} — detail 4`}
               fill
-              sizes="(max-width: 768px) 92vw, 60vw"
+              sizes="(max-width: 768px) 100vw, 1600px"
+              quality={90}
               className="object-cover"
             />
           </div>
