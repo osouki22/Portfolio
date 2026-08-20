@@ -4,7 +4,7 @@
   --font-sans: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
 
   /* Fluid display scale — large and confident at the top end. */
-  --text-display: clamp(3.25rem, 11vw, 10rem);
+  --text-display: clamp(3.75rem, 13vw, 12rem);
   --text-display-sm: clamp(2.5rem, 7vw, 6.5rem);
   --text-headline: clamp(2rem, 4.5vw, 4rem);
   --text-title: clamp(1.5rem, 2.6vw, 2.25rem);
